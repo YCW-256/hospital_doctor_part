@@ -1,0 +1,16 @@
+# Qt编译目录
+build/
+Build/
+
+# Qt工程配置缓存
+*.pro.user
+*.pro.user.*
+
+# IDE配置目录
+.idea/
+.vscode/
+
+# 编译产物
+*.obj
+*.o
+*.moc

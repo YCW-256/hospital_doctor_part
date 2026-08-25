@@ -1,0 +1,14 @@
+<RCC>
+    <qresource prefix="/">
+        <file>configs/config.txt</file>
+        <file>configs/total_config.josn</file>
+        <file>icons/avert1.jpg</file>
+        <file>icons/avert2.jpg</file>
+        <file>icons/doctor.png</file>
+        <file>icons/gua.png</file>
+        <file>icons/jiandang.png</file>
+        <file>icons/jiuzhen.png</file>
+        <file>icons/user.png</file>
+        <file>icons/user2.png</file>
+    </qresource>
+</RCC>
