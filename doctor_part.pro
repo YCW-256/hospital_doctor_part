@@ -12,11 +12,17 @@ SOURCES += \
     Task/businesstask.cpp \
     Task/logintask.cpp \
     Task/tologintask.cpp \
+    Tool/myutils.cpp \
+    Tool/readutil.cpp \
     main.cpp \
     mainwindow.cpp \
+    pans/appointwidget.cpp \
     pans/childs/chatbom.cpp \
     pans/childs/circularavatar.cpp \
-    pans/loginwidget.cpp
+    pans/childs/medicalcardwidget.cpp \
+    pans/childs/selbtn.cpp \
+    pans/loginwidget.cpp \
+    pans/syswidget.cpp
 
 HEADERS += \
     MyTcp/cdata.h \
@@ -25,15 +31,23 @@ HEADERS += \
     Task/businesstask.h \
     Task/logintask.h \
     Task/tologintask.h \
+    Tool/myutils.h \
+    Tool/readutil.h \
     mainwindow.h \
+    pans/appointwidget.h \
     pans/childs/chatbom.h \
     pans/childs/circularavatar.h \
-    pans/loginwidget.h
+    pans/childs/medicalcardwidget.h \
+    pans/childs/selbtn.h \
+    pans/loginwidget.h \
+    pans/syswidget.h
 
 FORMS += \
     mainwindow.ui \
+    pans/appointwidget.ui \
     pans/childs/chatbom.ui \
-    pans/loginwidget.ui
+    pans/loginwidget.ui \
+    pans/syswidget.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

@@ -10,5 +10,10 @@
         <file>icons/jiuzhen.png</file>
         <file>icons/user.png</file>
         <file>icons/user2.png</file>
+        <file>icons/sys/tongji.png</file>
+        <file>icons/sys/yuyue.png</file>
+        <file>icons/sys/zhiban.png</file>
+        <file>icons/sys/dangan.png</file>
+        <file>qss/tree.qss</file>
     </qresource>
 </RCC>

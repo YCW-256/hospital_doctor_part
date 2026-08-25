@@ -13,6 +13,8 @@ public:
 
     void execute();
 
+    bool is_success;
+
 signals:
 };
 

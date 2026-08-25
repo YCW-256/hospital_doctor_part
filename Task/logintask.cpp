@@ -15,5 +15,6 @@ void LoginTask::execute()
     DOCTOR_LOGIN_RESP resp;
     char *p=data.data();
     memcpy(&resp,p,len);
+    is_success=resp.result;
     qDebug()<<"是否成功"<<resp.result<<"id"<<resp.id;
 }

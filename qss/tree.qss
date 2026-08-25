@@ -1,0 +1,82 @@
+/* ================== 整体背景设置 ================== */
+/* 使用 #treeSideMenu 精准选中该控件 */
+QTreeWidget#treeSideMenu {
+    background-color: #D5E9F9;   /* 浅蓝白整体背景 */
+    border: none;                /* 去掉边框 */
+    outline: none;               /* 去掉点击后的虚线框 */
+    padding: 8px;                /* 整体内边距，让内容离边缘有呼吸感 */
+    font-family: "Segoe UI", "Microsoft YaHei";
+    font-size: 14px;
+    color: #333333;              /* 默认文字颜色 */
+}
+
+/* ================== 每一项的背景颜色设置 ================== */
+QTreeWidget#treeSideMenu::item {
+    height: 40px;                /* 固定高度，设置每一项的高度 */
+    border-radius: 8px;          /* 圆角效果 */
+    margin: 3px 6px;             /* 每项之间的间距和左右间距 */
+    padding-left: 12px;          /* 文字与左边缘的距离 */
+    background-color: transparent; /* 默认透明背景 */
+    color: #4A5568;              /* 默认文字：深灰蓝 */
+    border-bottom: 1px solid #F2F2F2; /* 左侧加一条蓝色高亮线，现代感强 */
+}
+
+/* ================== Hover（鼠标悬停）事件 ================== */
+QTreeWidget#treeSideMenu::item:hover {
+    background-color: #E1EFFE;   /* 悬停时变为浅蓝 */
+    color: #1E70BF;              /* 悬停文字变蓝 */
+}
+
+/* ================== Selected（选中）事件 ================== */
+QTreeWidget#treeSideMenu::item:selected {
+    background-color: #D6E9FF;   /* 选中时变为稍深一点的天蓝色 */
+    color: #005BB5;              /* 选中文字加深 */
+    font-weight: bold;           /* 加粗文字，突出显示 */
+    border-left: 4px solid #8AAEDE; /* 左侧加一条蓝色高亮线，现代感强 */
+    /* 注意：border-left 会使文字向左偏移一点，如不需要可删掉这行 */
+}
+
+/* ================== 大项（父节点）特殊处理 ================== */
+/* 让有子节点的项，背景带一点淡淡的底色，区分层级 */
+QTreeWidget#treeSideMenu::item:has-children {
+    background-color: #FFFFFF;   /* 大项默认纯白底色 */
+    color: #333333;
+    font-weight: bold;           /* 大项默认加粗 */
+}
+QTreeWidget#treeSideMenu::item:has-children:hover {
+    background-color: #E1EFFE;   /* 大项悬停同样变浅蓝 */
+}
+QTreeWidget#treeSideMenu::item:has-children:selected {
+    background-color: #D6E9FF;   /* 大项选中同样变天蓝 */
+}
+
+/* ================== 解决左侧展开箭头变色问题 ================== */
+/* 强制让箭头所在的分支区域不响应选中或悬停，永远保持透明 */
+QTreeWidget#treeSideMenu::branch {
+    background: transparent;
+    border: none;
+}
+QTreeWidget#treeSideMenu::branch:selected,
+QTreeWidget#treeSideMenu::branch:hover {
+    background: transparent;     /* 这里的核心：永远透明 */
+}
+
+/* ================== 顺带美化滚动条（可选） ================== */
+QTreeWidget#treeSideMenu QScrollBar:vertical {
+    border: none;
+    background: transparent;
+    width: 6px;
+    margin: 0px;
+}
+QTreeWidget#treeSideMenu QScrollBar::handle:vertical {
+    background: #C0D8F0;
+    border-radius: 3px;
+    min-height: 20px;
+}
+QTreeWidget#treeSideMenu QScrollBar::handle:vertical:hover {
+    background: #8AAEDE;
+}
+QTreeWidget#treeSideMenu QScrollBar::add-line:vertical,
+QTreeWidget#treeSideMenu QScrollBar::sub-line:vertical {
+    height: 0px;
+}

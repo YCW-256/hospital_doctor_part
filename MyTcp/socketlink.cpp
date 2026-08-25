@@ -115,10 +115,13 @@ void SocketLink::recv_data()
     char *p=recv_head.data();
     memcpy(&head,p,sizeof(HEAD));
     QByteArray recv_data= socket->read(head.len);
-    BusinessTask *task;
+
     if(head.type==SERVICE_TYPE::DOCTOR_LOGIN){
+        LoginTask *task;
         task=new LoginTask(head.len,recv_data,nullptr);
         task->execute();
+        if(task->is_success) {emit login_success();}
+        delete task;
     }
 
 

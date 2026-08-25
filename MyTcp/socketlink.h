@@ -27,6 +27,8 @@ signals:
     void sendok();
     void recvok(int id, int wet, int temperature);
     void warning(int id);
+
+    void login_success();
 public slots:
     void onConnected();
 

@@ -4,7 +4,8 @@
 #include <QMainWindow>
 #include "MyTcp/socketlink.h"
 #include "pans/loginwidget.h"
-
+#include "pans/syswidget.h"
+#include "pans/appointwidget.h"
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -23,6 +24,8 @@ public:
 
     void init_task_connect();
 
+    void init_stack_widget();
+
 signals:
     void sendok(QByteArray,int size);
 private:
@@ -32,6 +35,9 @@ private:
 
     LoginWidget* login_widget;
 
+    SysWidget* sys_widget;
+
+    AppointWidget* appoint_widget;
 
 };
 #endif // MAINWINDOW_H

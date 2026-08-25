@@ -5,6 +5,7 @@
 #include <QThread>
 #include <QEventLoop>
 #include <QPushButton>
+#include "Tool/readutil.h"
 using namespace  std;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -12,16 +13,24 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    ui->label->setAvatar(":/icons/avert1.jpg");
     m_socket=new SocketLink;
     m_socket->connectHost();
+
     login_widget=new LoginWidget;
     login_widget->show();
+    init_stack_widget();
+
+    ui->treeWidget->setObjectName("treeSideMenu");
+    ReadUtil::setWidgetQss(ui->treeWidget, ":/qss/tree.qss");
+
     QThread *thread=new QThread;
     m_socket->moveToThread(thread);
     thread->start();
     qDebug()<<"【主循环pid】"<<QThread::currentThreadId();
     init_task_connect();
+
+    init_connect();
+
 
     // // 2.局部事件循环，等待连接结果，最多超时8秒
     // QEventLoop loop;
@@ -62,10 +71,33 @@ MainWindow::~MainWindow()
 
 void MainWindow::init_connect()
 {
+    ui->treeWidget->setCurrentItem(ui->treeWidget->topLevelItem(0));
+    connect(sys_widget,&SysWidget::to_app_page,this,[this](){
+        ui->stackedWidget->setCurrentWidget(appoint_widget);
+        ui->treeWidget->setCurrentItem(ui->treeWidget->topLevelItem(4));
+    });
 
 }
 
 void MainWindow::init_task_connect()
 {
     connect(this->login_widget,&LoginWidget::to_login_ok,this->m_socket,&SocketLink::send_data);
+
+    connect(this->m_socket,&SocketLink::login_success,this,[this](){
+        login_widget->hide();
+        this->show();
+    });
+
+}
+
+void MainWindow::init_stack_widget()
+{
+    sys_widget=new SysWidget(this);
+    ui->stackedWidget->addWidget(sys_widget);
+    appoint_widget=new AppointWidget;
+    ui->stackedWidget->addWidget(appoint_widget);
+
+    ui->stackedWidget->setCurrentWidget(sys_widget);
+
+
 }
