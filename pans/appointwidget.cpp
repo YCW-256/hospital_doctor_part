@@ -3,15 +3,21 @@
 #include <QButtonGroup>
 #include "../MyTcp/protecol.h"
 #include "../MyTcp/cdata.h"
+#include "../Tool/myutils.h"
 #include <QScrollBar>
 //按钮索引  日  周  月  0  1  2
 AppointWidget::AppointWidget(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::AppointWidget)
 {
-    ui->setupUi(this);
-    init_connect();
 
+    ui->setupUi(this);
+    ui->scrollArea->setStyleSheet("background: transparent;");
+    ui->scrollArea->viewport()->setStyleSheet("background: transparent;");
+    ui->label->setStyleSheet("background: transparent;");
+    init_connect();
+    MyUtils::setBack(this,"#E8F2F6");
+    this->setAttribute(Qt::WA_StyledBackground, true);
 }
 
 AppointWidget::~AppointWidget()
@@ -46,7 +52,7 @@ void AppointWidget::flush()
         int state = CData::app_info[i].state;
 
         MedicalCardWidget *newCard = new MedicalCardWidget(this);
-        newCard->setFixedSize(QSize(330, 129));
+        newCard->setFixedSize(QSize(430, 129));
 
         // 注意：因为去掉了 time2，setInfo 现在只有 6 个参数
         // 且最后的两个参数是 bool 类型，如果 state 有具体的枚举值，请自行转化为布尔

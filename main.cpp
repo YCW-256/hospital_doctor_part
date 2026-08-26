@@ -5,6 +5,8 @@
 #include "pans/childs/medicalcardwidget.h"
 #include "pans/childs/selbtn.h"
 #include "pans/appointwidget.h"
+#include "pans/childs/customcard.h"
+#include "pans/guardwidget.h"
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
@@ -12,6 +14,11 @@ int main(int argc, char *argv[])
 
     MainWindow w;
 
+    //CustomCard ca;
+    //ca.show();
+
+    GuardWidget g;
+    g.show();
 
 
 

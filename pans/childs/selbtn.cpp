@@ -8,9 +8,11 @@
 SelBtn::SelBtn( QWidget *parent)
     : QWidget(parent)
 {
+    this->setAttribute(Qt::WA_StyledBackground, true);
     QStringList items={"今天", "本周", "本月"};
     this->setAttribute(Qt::WA_StyledBackground, true);
-    this->setStyleSheet("SelBtn { background-color: #F8F9FA; border: 1px solid #E5E5E5; border-radius: 8px; }");
+    this->setStyleSheet("SelBtn { background-color:transparent; border: 1px solid #E5E5E5; border-radius: 8px; }");
+    //this->setStyleSheet("SelBtn { background: transparent; border: none; }");
     QHBoxLayout *layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);

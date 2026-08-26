@@ -6,6 +6,7 @@
 #include "pans/loginwidget.h"
 #include "pans/syswidget.h"
 #include "pans/appointwidget.h"
+#include "pans/guardwidget.h"
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -38,6 +39,8 @@ private:
     SysWidget* sys_widget;
 
     AppointWidget* appoint_widget;
+
+    GuardWidget* guard_widget;
 
 };
 #endif // MAINWINDOW_H

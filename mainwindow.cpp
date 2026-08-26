@@ -12,6 +12,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
+
     this->setMinimumSize(CData::current_width,CData::current_height);
 
     ui->setupUi(this);
@@ -75,10 +76,17 @@ MainWindow::~MainWindow()
 void MainWindow::init_connect()
 {
     ui->treeWidget->setCurrentItem(ui->treeWidget->topLevelItem(0));
+    //主到约会
     connect(sys_widget,&SysWidget::to_app_page,this,[this](){
         ui->stackedWidget->setCurrentWidget(appoint_widget);
         ui->treeWidget->setCurrentItem(ui->treeWidget->topLevelItem(4));
     });
+    //主到值班
+    connect(sys_widget,&SysWidget::to_guard_page,this,[this](){
+        ui->stackedWidget->setCurrentWidget(guard_widget);
+        ui->treeWidget->setCurrentItem(ui->treeWidget->topLevelItem(3));
+    });
+
 
     connect(ui->treeWidget, &QTreeWidget::itemClicked, this, [this](QTreeWidgetItem *item, int column){
         int index = ui->treeWidget->indexOfTopLevelItem(item);
@@ -86,6 +94,7 @@ void MainWindow::init_connect()
         switch(index){
         case 0:ui->stackedWidget->setCurrentWidget(sys_widget);break;
         case 1:break;
+        case 3:ui->stackedWidget->setCurrentWidget(guard_widget);break;
         case 4:ui->stackedWidget->setCurrentWidget(appoint_widget);break;
         }
 
@@ -98,6 +107,8 @@ void MainWindow::init_task_connect()
     connect(this->login_widget,&LoginWidget::to_login_ok,this->m_socket,&SocketLink::send_data);
 
     connect(this->appoint_widget,&AppointWidget::to_get_meet,this->m_socket,&SocketLink::send_data);
+
+
 
 
     connect(this->m_socket,&SocketLink::login_success,this,[this](){
@@ -114,10 +125,17 @@ void MainWindow::init_task_connect()
 void MainWindow::init_stack_widget()
 {
     sys_widget=new SysWidget(this);
-    ui->stackedWidget->addWidget(sys_widget);
+
     appoint_widget=new AppointWidget;
+
+    guard_widget=new GuardWidget;
+
+    ui->stackedWidget->addWidget(sys_widget);
+
     ui->stackedWidget->addWidget(appoint_widget);
 
+    ui->stackedWidget->addWidget(guard_widget);
+    //设置默认页（系统页）
     ui->stackedWidget->setCurrentWidget(sys_widget);
 
 

@@ -20,8 +20,10 @@ SOURCES += \
     pans/appointwidget.cpp \
     pans/childs/chatbom.cpp \
     pans/childs/circularavatar.cpp \
+    pans/childs/customcard.cpp \
     pans/childs/medicalcardwidget.cpp \
     pans/childs/selbtn.cpp \
+    pans/guardwidget.cpp \
     pans/loginwidget.cpp \
     pans/syswidget.cpp
 
@@ -39,8 +41,10 @@ HEADERS += \
     pans/appointwidget.h \
     pans/childs/chatbom.h \
     pans/childs/circularavatar.h \
+    pans/childs/customcard.h \
     pans/childs/medicalcardwidget.h \
     pans/childs/selbtn.h \
+    pans/guardwidget.h \
     pans/loginwidget.h \
     pans/syswidget.h
 
@@ -48,6 +52,7 @@ FORMS += \
     mainwindow.ui \
     pans/appointwidget.ui \
     pans/childs/chatbom.ui \
+    pans/guardwidget.ui \
     pans/loginwidget.ui \
     pans/syswidget.ui
 

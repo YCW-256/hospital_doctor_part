@@ -10,7 +10,10 @@ public:
     MyUtils();
     static void setIcons(QToolButton* button, const QString& text, const QString& img_path);
 
-    static void setBack(QWidget* widget);
+    static void setBack(QWidget* widget,QString color1="#D4E9F9",QString color2="#FFFFFF");
+
+
+    //#E8F2F6
 
     static void setLabel(QLabel *label,int font_size,bool is_bold);
 

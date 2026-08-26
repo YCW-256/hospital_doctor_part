@@ -31,17 +31,18 @@ void MyUtils::setIcons(QToolButton* button, const QString& text, const QString& 
         );
 }
 
-void MyUtils::setBack(QWidget *widget)
+void MyUtils::setBack(QWidget *widget, QString color1, QString color2)
 {
     if (!widget) return;
 
-    // 垂直渐变：从浅蓝 (顶部) 到白色 (底部)
-    widget->setStyleSheet(
-        "QWidget {"
-        "    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
-        "                                 stop:0 #D4E9F9, stop:1 #FFFFFF);"
-        "}"
-        );
+    QString styleSheet = QString(
+                             "QWidget {"
+                             "    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
+                             "                                 stop:0 %1, stop:1 %2);"
+                             "}"
+                             ).arg(color1, color2);
+
+    widget->setStyleSheet(styleSheet);
 }
 
 void MyUtils::setLabel(QLabel *label,int font_size,bool is_bold)

@@ -50,15 +50,15 @@ void MedicalCardWidget::initUI()
     infoLayout->setSpacing(4);
 
     m_nameLabel = new QLabel("王浩然", this);
-    m_nameLabel->setStyleSheet("font-size: 20px; font-weight: bold; color: #333333; border: none;");
+    m_nameLabel->setStyleSheet("font-size: 20px; font-weight: bold; color: #333333; border: none;background-color:transparent;");
     infoLayout->addWidget(m_nameLabel);
 
     m_deptLabel = new QLabel("皮肤科", this);
-    m_deptLabel->setStyleSheet("font-size: 14px; color: #555555; border: none;");
+    m_deptLabel->setStyleSheet("font-size: 14px; color: #555555; border: none;background-color:transparent;");
     infoLayout->addWidget(m_deptLabel);
 
     m_doctorLabel = new QLabel("陈医生", this);
-    m_doctorLabel->setStyleSheet("font-size: 14px; color: #555555; border: none;");
+    m_doctorLabel->setStyleSheet("font-size: 14px; color: #555555; border: none;background-color:transparent;");
     infoLayout->addWidget(m_doctorLabel);
 
     QFrame *line = new QFrame(this);
@@ -70,7 +70,7 @@ void MedicalCardWidget::initUI()
     QHBoxLayout *timeLayout = new QHBoxLayout();
     timeLayout->setSpacing(20);
     m_time1Label = new QLabel("14:00", this);
-    m_time1Label->setStyleSheet("font-size: 16px; font-weight: bold; color: #333333; border: none;");
+    m_time1Label->setStyleSheet("font-size: 16px; font-weight: bold; color: #333333; border: none;background-color:transparent;");
     timeLayout->addWidget(m_time1Label);
     timeLayout->addStretch(); // 让时间靠左
     infoLayout->addLayout(timeLayout);

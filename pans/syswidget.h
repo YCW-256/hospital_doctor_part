@@ -25,6 +25,8 @@ signals:
 
     void to_app_page();
 
+    void to_guard_page();
+
 
 };
 
