@@ -14,8 +14,7 @@ public:
 
     // 提供接口，方便你动态修改卡片内容
     void setInfo(const QString &name, const QString &department, const QString &doctor,
-                 const QString &time1, const QString &time2,
-                 bool hasVisited, bool confirmed);
+                 const QString &time1, bool hasVisited, bool confirmed);
 
 private:
     void initUI();
@@ -26,7 +25,7 @@ private:
     QLabel *m_deptLabel;
     QLabel *m_doctorLabel;
     QLabel *m_time1Label;
-    QLabel *m_time2Label;
+    // QLabel *m_time2Label; // 已移除
     QPushButton *m_statusBtn1;
     QPushButton *m_statusBtn2;
 };

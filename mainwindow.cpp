@@ -80,6 +80,17 @@ void MainWindow::init_connect()
         ui->treeWidget->setCurrentItem(ui->treeWidget->topLevelItem(4));
     });
 
+    connect(ui->treeWidget, &QTreeWidget::itemClicked, this, [this](QTreeWidgetItem *item, int column){
+        int index = ui->treeWidget->indexOfTopLevelItem(item);
+
+        switch(index){
+        case 0:ui->stackedWidget->setCurrentWidget(sys_widget);break;
+        case 1:break;
+        case 4:ui->stackedWidget->setCurrentWidget(appoint_widget);break;
+        }
+
+    });
+
 }
 
 void MainWindow::init_task_connect()

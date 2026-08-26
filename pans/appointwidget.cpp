@@ -21,57 +21,49 @@ AppointWidget::~AppointWidget()
 
 void AppointWidget::flush()
 {
-    // 删除 widget_2
-    if (ui->widget_2) {
-        ui->gridLayout_3->removeWidget(ui->widget_2);
-        delete ui->widget_2;
-        ui->widget_2 = nullptr;
-    }
-
-    // 删除 widget_3
-    if (ui->widget_3) {
-        ui->gridLayout_3->removeWidget(ui->widget_3);
-        delete ui->widget_3;
-        ui->widget_3 = nullptr;
-    }
-
-    // 删除 widget_4
-    if (ui->widget_4) {
-        ui->gridLayout_3->removeWidget(ui->widget_4);
-        delete ui->widget_4;
-        ui->widget_4 = nullptr;
-    }
-
-    // 删除 widget_5
-    if (ui->widget_5) {
-        ui->gridLayout_3->removeWidget(ui->widget_5);
-        delete ui->widget_5;
-        ui->widget_5 = nullptr;
-    }
-
-    // 删除 widget_6
-    if (ui->widget_6) {
-        ui->gridLayout_3->removeWidget(ui->widget_6);
-        delete ui->widget_6;
-        ui->widget_6 = nullptr;
-    }
-
-    // 注意：布局 gridLayout_3 和 verticalSpacer 保留了下来。
-    // 因为已置空，即使 ui 类析构时也不会重复 delete 导致崩溃。
-    int row=(CData::app_info.size()+1)/2;
-    for(int i=0;i<row;i++){
-        for(int j=0;j<2;j++){
-            QString name=CData::app_info[i].name;
-            QString time=CData::app_info[i].time;
-            qDebug()<<name<<time;
-            int state=CData::app_info[i].state;
-            MedicalCardWidget *newCard = new MedicalCardWidget(this);
-            newCard->setFixedSize(QSize(380,129));
-            newCard->setInfo(name, "外科", "我", time, "09:30", state, state);
-            ui->gridLayout_3->addWidget(newCard, i, j);
+    // 1. 动态清空布局内所有项（包括初始的widget_2~6，以及之前动态添加的所有卡片）
+    // 使用 takeAt(0) 每次取出第一个项，直到取完
+    QLayoutItem *child;
+    while ((child = ui->gridLayout_3->takeAt(0)) != 0) {
+        if (child->widget()) {
+            // 删除 widget（MedicalCardWidget）
+            delete child->widget();
         }
+        // 删除 layout item 本身（如果是 Spacer，也一并清理）
+        delete child;
     }
 
+    // 2. 如果你保留了 verticalSpacer，但在上面被删除了，可以重新加回去：
+    // 或者直接使用 setRowStretch 让内容顶端对齐（推荐）
+    // ui->gridLayout_3->setRowStretch(ui->gridLayout_3->rowCount(), 1);
+
+    // 3. 重新添加数据项
+    int count = CData::app_info.size();
+    for (int i = 0; i < count; ++i) {
+        // 取全局第 i 条数据
+        QString name = CData::app_info[i].name;
+        QString time = CData::app_info[i].time;
+        int state = CData::app_info[i].state;
+
+        MedicalCardWidget *newCard = new MedicalCardWidget(this);
+        newCard->setFixedSize(QSize(330, 129));
+
+        // 注意：因为去掉了 time2，setInfo 现在只有 6 个参数
+        // 且最后的两个参数是 bool 类型，如果 state 有具体的枚举值，请自行转化为布尔
+        bool hasVisited = (state == 1); // 假设1是已就诊
+        bool confirmed = (state == 2);  // 假设2是已确认
+
+        newCard->setInfo(name, "外科", "我", time, hasVisited, confirmed);
+
+        // 计算行列：每行放2个
+        int row = i / 2;
+        int col = i % 2;
+
+        ui->gridLayout_3->addWidget(newCard, row, col);
+    }
+
+    // 确保底部撑开
+    ui->gridLayout_3->setRowStretch(ui->gridLayout_3->rowCount(), 1);
 }
 
 
