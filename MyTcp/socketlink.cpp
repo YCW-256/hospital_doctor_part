@@ -3,6 +3,7 @@
 #include "CData.h"
 #include <QThread>
 #include "../Task/logintask.h"
+#include "../Task/getinfotask.h"
 SocketLink::SocketLink(QObject *parent)
     : QObject{parent}
 {
@@ -123,6 +124,14 @@ void SocketLink::recv_data()
         if(task->is_success) {emit login_success();}
         delete task;
     }
+    else if(head.type==SERVICE_TYPE::DOCTOR_APP_INFO){
+        GetInfoTask *task;
+        task=new GetInfoTask(head.len,recv_data,nullptr);
+        task->execute();
+        emit get_app_success();
+        delete task;
+    }
+
 
 
 }

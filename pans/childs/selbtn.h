@@ -15,6 +15,8 @@ public:
     void setCurrentIndex(int index);
     int currentIndex() const;
 
+
+
 signals:
     void currentIndexChanged(int index);
 

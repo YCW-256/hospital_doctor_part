@@ -12,13 +12,6 @@ int main(int argc, char *argv[])
 
     MainWindow w;
 
-    MedicalCardWidget b;
-    b.show();
-    SelBtn *timeSelector = new SelBtn();
-    timeSelector->show();
-    //w.show();
-    AppointWidget app;
-    app.show();
 
 
 

@@ -10,6 +10,8 @@ QString CData::ip="";
 int CData::port=0;
 int CData::current_width=500;
 int CData::current_height=200;
+int CData::m_id=-1;
+vector<APP_INFO> CData::app_info{};
 CData::CData() {
 
 
@@ -50,6 +52,8 @@ bool CData:: readJsonFile()
 
     return true;
 }
+
+
 
 
 

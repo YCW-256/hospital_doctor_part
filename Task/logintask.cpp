@@ -1,5 +1,6 @@
 #include "logintask.h"
 #include <qDebug>
+#include "../MyTcp/cdata.h"
 LoginTask::LoginTask(QObject *parent)
     : BusinessTask::BusinessTask{parent}
 {}
@@ -17,4 +18,5 @@ void LoginTask::execute()
     memcpy(&resp,p,len);
     is_success=resp.result;
     qDebug()<<"是否成功"<<resp.result<<"id"<<resp.id;
+    CData::m_id=resp.id;
 }

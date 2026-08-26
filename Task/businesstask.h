@@ -1,8 +1,11 @@
 #ifndef BUSINESSTASK_H
 #define BUSINESSTASK_H
-
+#include <QDebug>
 #include <QObject>
 #include "MyTcp/protecol.h"
+#include "MyTcp/cdata.h"
+#include <String.h>
+using namespace std;
 class BusinessTask : public QObject
 {
     Q_OBJECT

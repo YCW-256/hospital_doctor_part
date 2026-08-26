@@ -6,11 +6,14 @@
 #include <QEventLoop>
 #include <QPushButton>
 #include "Tool/readutil.h"
+#include "MyTcp/cdata.h"
 using namespace  std;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
+    this->setMinimumSize(CData::current_width,CData::current_height);
+
     ui->setupUi(this);
 
     m_socket=new SocketLink;
@@ -83,10 +86,17 @@ void MainWindow::init_task_connect()
 {
     connect(this->login_widget,&LoginWidget::to_login_ok,this->m_socket,&SocketLink::send_data);
 
+    connect(this->appoint_widget,&AppointWidget::to_get_meet,this->m_socket,&SocketLink::send_data);
+
+
     connect(this->m_socket,&SocketLink::login_success,this,[this](){
         login_widget->hide();
         this->show();
     });
+    connect(this->m_socket,&SocketLink::get_app_success,this,[this](){
+        this->appoint_widget->flush();
+    });
+
 
 }
 

@@ -10,6 +10,7 @@ SOURCES += \
     MyTcp/cdata.cpp \
     MyTcp/socketlink.cpp \
     Task/businesstask.cpp \
+    Task/getinfotask.cpp \
     Task/logintask.cpp \
     Task/tologintask.cpp \
     Tool/myutils.cpp \
@@ -29,6 +30,7 @@ HEADERS += \
     MyTcp/protecol.h \
     MyTcp/socketlink.h \
     Task/businesstask.h \
+    Task/getinfotask.h \
     Task/logintask.h \
     Task/tologintask.h \
     Tool/myutils.h \

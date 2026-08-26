@@ -29,6 +29,8 @@ signals:
     void warning(int id);
 
     void login_success();
+
+    void get_app_success();
 public slots:
     void onConnected();
 
