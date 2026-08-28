@@ -1,4 +1,5 @@
-QT += core gui widgets   network serialport
+QT += core gui widgets network serialport webenginewidgets
+
 
 CONFIG += c++17
 
@@ -25,7 +26,8 @@ SOURCES += \
     pans/childs/selbtn.cpp \
     pans/guardwidget.cpp \
     pans/loginwidget.cpp \
-    pans/syswidget.cpp
+    pans/syswidget.cpp \
+    widget.cpp
 
 HEADERS += \
     MyTcp/cdata.h \
@@ -46,7 +48,8 @@ HEADERS += \
     pans/childs/selbtn.h \
     pans/guardwidget.h \
     pans/loginwidget.h \
-    pans/syswidget.h
+    pans/syswidget.h \
+    widget.h
 
 FORMS += \
     mainwindow.ui \
@@ -56,12 +59,11 @@ FORMS += \
     pans/loginwidget.ui \
     pans/syswidget.ui
 
-# Default rules for deployment.
-qnx: target.path = /tmp/$${TARGET}/bin
-else: unix:!android: target.path = /opt/$${TARGET}/bin
-!isEmpty(target.path): INSTALLS += target
+RESOURCES += \
+    resource.qrc
 
 DESTDIR = $$PWD/bin
 
-RESOURCES += \
-    resource.qrc
+qnx: target.path = /tmp/$${TARGET}/bin
+else: unix:!android: target.path = /opt/$${TARGET}/bin
+!isEmpty(target.path): INSTALLS += target

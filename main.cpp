@@ -7,6 +7,7 @@
 #include "pans/appointwidget.h"
 #include "pans/childs/customcard.h"
 #include "pans/guardwidget.h"
+#include "widget.h"
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
@@ -17,9 +18,10 @@ int main(int argc, char *argv[])
     //CustomCard ca;
     //ca.show();
 
-    GuardWidget g;
-    g.show();
-
+    //GuardWidget g;
+    //g.show();
+    Widget b;
+    b.show();
 
 
     return QApplication::exec();

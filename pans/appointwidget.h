@@ -2,11 +2,11 @@
 #define APPOINTWIDGET_H
 #include <QByteArray>
 #include <QWidget>
-enum{
+enum SEL_TIME{
     DAY,
     WEEK,
     MOUNTH
-}SEL_TIME;
+};
 
 namespace Ui {
 class AppointWidget;
