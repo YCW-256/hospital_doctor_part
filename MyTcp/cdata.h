@@ -7,6 +7,7 @@
 #include <iostream>
 #include <QDebug>
 #include <vector>
+#include "protecol.h"
 using namespace std;
 
 typedef struct{
@@ -32,6 +33,10 @@ public:
 
     static vector<APP_INFO> app_info;
     //-----------------预约信息---------------------
+
+    //科室医生信息
+    static vector<DOCCTOR_INFO>selece_department_info;
+
 };
 
 #endif // CDATA_H

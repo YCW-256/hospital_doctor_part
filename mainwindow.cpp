@@ -96,6 +96,7 @@ void MainWindow::init_connect()
         case 1:break;
         case 3:ui->stackedWidget->setCurrentWidget(guard_widget);break;
         case 4:ui->stackedWidget->setCurrentWidget(appoint_widget);break;
+        case 5:ui->stackedWidget->setCurrentWidget(order_widget);break;
         }
 
     });
@@ -108,6 +109,10 @@ void MainWindow::init_task_connect()
 
     connect(this->appoint_widget,&AppointWidget::to_get_meet,this->m_socket,&SocketLink::send_data);
 
+    //值班管理流
+    connect(this->order_widget,&OrderWidget::get_doctor_info,this->m_socket,&SocketLink::send_data);
+
+    connect(this->m_socket,&SocketLink::get_doctor_info_success,this->order_widget,&OrderWidget::flush_doctor);
 
 
 
@@ -115,6 +120,7 @@ void MainWindow::init_task_connect()
         login_widget->hide();
         this->show();
     });
+    //预约流
     connect(this->m_socket,&SocketLink::get_app_success,this,[this](){
         this->appoint_widget->flush();
     });
@@ -130,11 +136,15 @@ void MainWindow::init_stack_widget()
 
     guard_widget=new GuardWidget;
 
+    order_widget=new OrderWidget;
+
     ui->stackedWidget->addWidget(sys_widget);
 
     ui->stackedWidget->addWidget(appoint_widget);
 
     ui->stackedWidget->addWidget(guard_widget);
+
+    ui->stackedWidget->addWidget(order_widget);
     //设置默认页（系统页）
     ui->stackedWidget->setCurrentWidget(sys_widget);
 

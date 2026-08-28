@@ -4,6 +4,7 @@
 #include <QThread>
 #include "../Task/logintask.h"
 #include "../Task/getinfotask.h"
+#include "../Task/getdepartmentdoctortask.h"
 SocketLink::SocketLink(QObject *parent)
     : QObject{parent}
 {
@@ -111,11 +112,17 @@ void SocketLink::send_data(QByteArray send_buf,int size)
 
 void SocketLink::recv_data()
 {
+    qDebug()<<"读";
     HEAD head;
     QByteArray recv_head= socket->read(sizeof(HEAD));
+
+
+
     char *p=recv_head.data();
     memcpy(&head,p,sizeof(HEAD));
     QByteArray recv_data= socket->read(head.len);
+    qDebug() << "期望读取 body:" << head.len << "，实际读取:" << recv_data.size();
+    qDebug()<<"type"<<head.type;
 
     if(head.type==SERVICE_TYPE::DOCTOR_LOGIN){
         LoginTask *task;
@@ -129,6 +136,13 @@ void SocketLink::recv_data()
         task=new GetInfoTask(head.len,recv_data,nullptr);
         task->execute();
         emit get_app_success();
+        delete task;
+    }
+    else if(head.type==SERVICE_TYPE::SELECT_DOCTOR){
+        GetDepartmentDoctorTask *task;
+        task=new GetDepartmentDoctorTask(head.len,recv_data,nullptr);
+        task->execute();
+        emit get_doctor_info_success();
         delete task;
     }
 

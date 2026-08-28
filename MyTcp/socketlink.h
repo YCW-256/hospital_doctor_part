@@ -31,6 +31,9 @@ signals:
     void login_success();
 
     void get_app_success();
+
+    void get_doctor_info_success();
+
 public slots:
     void onConnected();
 

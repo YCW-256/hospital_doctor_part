@@ -11,6 +11,7 @@ SOURCES += \
     MyTcp/cdata.cpp \
     MyTcp/socketlink.cpp \
     Task/businesstask.cpp \
+    Task/getdepartmentdoctortask.cpp \
     Task/getinfotask.cpp \
     Task/logintask.cpp \
     Task/tologintask.cpp \
@@ -26,6 +27,7 @@ SOURCES += \
     pans/childs/selbtn.cpp \
     pans/guardwidget.cpp \
     pans/loginwidget.cpp \
+    pans/orderwidget.cpp \
     pans/syswidget.cpp \
     widget.cpp
 
@@ -34,6 +36,7 @@ HEADERS += \
     MyTcp/protecol.h \
     MyTcp/socketlink.h \
     Task/businesstask.h \
+    Task/getdepartmentdoctortask.h \
     Task/getinfotask.h \
     Task/logintask.h \
     Task/tologintask.h \
@@ -48,6 +51,7 @@ HEADERS += \
     pans/childs/selbtn.h \
     pans/guardwidget.h \
     pans/loginwidget.h \
+    pans/orderwidget.h \
     pans/syswidget.h \
     widget.h
 
@@ -57,6 +61,7 @@ FORMS += \
     pans/childs/chatbom.ui \
     pans/guardwidget.ui \
     pans/loginwidget.ui \
+    pans/orderwidget.ui \
     pans/syswidget.ui
 
 RESOURCES += \

@@ -12,6 +12,9 @@ int CData::current_width=500;
 int CData::current_height=200;
 int CData::m_id=-1;
 vector<APP_INFO> CData::app_info{};
+
+vector<DOCCTOR_INFO> CData::selece_department_info{};
+
 CData::CData() {
 
 
@@ -52,6 +55,8 @@ bool CData:: readJsonFile()
 
     return true;
 }
+
+
 
 
 

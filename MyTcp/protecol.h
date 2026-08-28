@@ -7,6 +7,7 @@ enum SERVICE_TYPE {
 
     DOCTOR_LOGIN,
     DOCTOR_APP_INFO,
+    SELECT_DOCTOR,
 
 };
 
@@ -49,6 +50,30 @@ typedef struct {
 
 }DOCTOR_APP_RESP;
 
+typedef struct {
+    int id;
+    char department[15];
+}DOCTOR_INFO_REQ;
+
+typedef struct {
+    int id;
+    char name[20];
+}DOCCTOR_INFO;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 typedef struct {
     int id;
@@ -68,7 +93,7 @@ typedef struct {
     int temperature;
     bool isClass[12];
 }ENVIR_RESP;
-typedef struct{
+typedef struct {
     int id;
     int temperature;
 }GETENVIR_REQ;
