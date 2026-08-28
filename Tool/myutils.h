@@ -3,6 +3,9 @@
 #include <QToolButton>
 #include <QObject>
 #include <QLabel>
+#include "QDate"
+#include "../MyTcp/protecol.h"
+#include "string.h"
 class MyUtils
 {
 
@@ -18,6 +21,10 @@ public:
     static void setLabel(QLabel *label,int font_size,bool is_bold);
 
     static void setLabelImg(QLabel *label,const QString &img_path,int size=40);
+    //根据日期返回当周
+    static void weekAndDate(QLabel *labels[],QDate=QDate::currentDate());
+
+    static void weekAndDate(QLabel *labels[],GUARD_REPIX_T info[][7] ,QDate=QDate::currentDate());
 };
 
 #endif // MYUTILS_H

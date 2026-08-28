@@ -93,3 +93,43 @@ void MyUtils::setLabelImg(QLabel *label, const QString &img_path, int size)
     label->setFixedSize(size, size);
     label->setAlignment(Qt::AlignCenter);
 }
+
+void MyUtils::weekAndDate(QLabel *labels[], QDate date)
+{
+    if (!labels) return;
+
+    // 计算 date 所在周的周一（Qt: Monday=1, Sunday=7）
+    QDate monday = date.addDays(- (date.dayOfWeek() - 1));
+
+    for (int i = 0; i < 7; ++i) {
+        QDate day = monday.addDays(i);
+        QString dateStr = QString("%1月%2日").arg(day.month()).arg(day.day());
+        labels[i]->setText(dateStr);
+    }
+}
+
+void MyUtils::weekAndDate(QLabel *labels[], GUARD_REPIX_T info[][7], QDate date)
+{
+    if (!labels) return;
+
+    // 计算 date 所在周的周一（Qt: Monday=1, Sunday=7）
+    QDate monday = date.addDays(- (date.dayOfWeek() - 1));
+
+    for (int i = 0; i < 7; ++i) {
+        QDate day = monday.addDays(i);
+        QString dateStr = QString("%1月%2日").arg(day.month()).arg(day.day());
+        labels[i]->setText(dateStr);
+
+        // 将日期以 "yyyy-MM-dd" 格式存入 info 的 time 字段中
+        QString isoDate = day.toString("yyyy-MM-dd");   // 例如 "2026-08-28"
+        QByteArray ba = isoDate.toLocal8Bit();
+        const char* cstr = ba.constData();
+
+        for (int j = 0; j < 3; ++j) {
+            // 假设 time 数组大小足够（至少 11 字节，因为 "yyyy-MM-dd" 长度为 10 + 结尾符）
+            strncpy_s(info[j][i].date, cstr, sizeof(info[j][i].date) - 1);
+            // 确保字符串以 '\0' 结尾
+            info[j][i].date[sizeof(info[j][i].date) - 1] = '\0';
+        }
+    }
+}

@@ -4,9 +4,12 @@
 #include <QMouseEvent>
 #include <QDebug>
 
-CustomCard::CustomCard(const QString &department, const QString &timeSlot, const QString &event, QWidget *parent)
+CustomCard::CustomCard(const QString &department, const QString &timeSlot, const QString &event,const QString &name,QWidget *parent)
     : QWidget(parent)
 {
+
+
+    isfree=true;
     // 修改为高大于宽的比例（宽140，高180）
     setFixedSize(140, 180);
     setAttribute(Qt::WA_StyledBackground);
@@ -28,8 +31,12 @@ CustomCard::CustomCard(const QString &department, const QString &timeSlot, const
     QString bgColor = (event == "手术") ? "#FFEBEB" : "#E0F7FA";
     QString fontColor = (event == "手术") ? "#E57373" : "#00ACC1";
     eventLabel->setAlignment(Qt::AlignCenter);
-    eventLabel->setStyleSheet(QString("border: none; background-color: %1; color: %2; border-radius: 12px; padding: 4px 10px; font-weight: bold; font-size: 12px;")
-                                  .arg(bgColor, fontColor));
+    // eventLabel->setStyleSheet(QString("border: none; background-color: %1; color: %2; border-radius: 12px; padding: 4px 10px; font-weight: bold; font-size: 12px;")
+    //                               .arg(bgColor, fontColor));
+
+    eventLabel->setStyleSheet(QString("border: none;  border-radius: 12px; padding: 4px 10px; font-weight: bold; font-size: 12px;")
+                                        );
+
     mainLayout->addWidget(eventLabel, 0, Qt::AlignCenter); // 居中显示
 
     // 3. 时间（放在最下面）
@@ -37,7 +44,11 @@ CustomCard::CustomCard(const QString &department, const QString &timeSlot, const
     timeLabel->setAlignment(Qt::AlignCenter);
     timeLabel->setStyleSheet("border: none; font-size: 14px; color: #555;");
     mainLayout->addWidget(timeLabel);
-
+    //4 name
+    nameLabel = new QLabel(name, this);
+    nameLabel->setAlignment(Qt::AlignCenter);
+    nameLabel->setStyleSheet("border: none; font-size: 14px; color: #555;");
+    mainLayout->addWidget(nameLabel);
     // 添加弹簧，让中间有个过渡感，保证上下间距匀称
     mainLayout->addStretch();
 
@@ -47,13 +58,54 @@ CustomCard::CustomCard(const QString &department, const QString &timeSlot, const
     timeLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
 }
 
+void CustomCard::switch_color()
+{
+    if(isfree){
+        setStyleSheet("QWidget { background-color: yellow; border: 1px solid #A9D0F5; border-radius: 10px; }");
+    }
+    else{
+        setStyleSheet("QWidget { background-color: white; border: 1px solid #A9D0F5; border-radius: 10px; }");
+    }
+}
+
 
 
 void CustomCard::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
         qDebug() << "点击日程卡";
+        //switch_color();
+
         emit clicked();
     }
     QWidget::mousePressEvent(event);
+}
+
+void CustomCard::to_deal_leave(const QString content[])
+{
+     switch_color();
+    if(!isfree){
+        setCardInfo("","","","");
+    }
+    else{
+        setCardInfo(content[0],content[1],content[2],content[3]);
+    }
+
+    isfree=1-isfree;
+
+
+}
+
+
+void CustomCard::setCardInfo(const QString &department, const QString &timeSlot, const QString &event, const QString &name)
+{
+    departmentLabel->setText(department);
+    timeLabel->setText(timeSlot);
+    eventLabel->setText(event);
+    nameLabel->setText(name);
+}
+
+bool CustomCard::getIsfree()
+{
+    return isfree;
 }

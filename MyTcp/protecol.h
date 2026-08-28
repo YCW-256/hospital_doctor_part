@@ -62,6 +62,22 @@ typedef struct {
 
 
 
+//建立
+typedef struct{
+    int id;//值班人
+    char date[20];//日期;
+    int time;//时间
+    bool isfree;//是否应用
+    char depart[20];//科室
+}GUARD_REPIX_T;
+
+
+
+
+
+
+
+
 
 
 
