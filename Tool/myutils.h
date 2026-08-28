@@ -25,6 +25,8 @@ public:
     static void weekAndDate(QLabel *labels[],QDate=QDate::currentDate());
 
     static void weekAndDate(QLabel *labels[],GUARD_REPIX_T info[][7] ,QDate=QDate::currentDate());
+
+    static QString getThisWeekMondayStr(const QDate& date = QDate::currentDate());
 };
 
 #endif // MYUTILS_H

@@ -34,6 +34,8 @@ signals:
 
     void get_doctor_info_success();
 
+    void get_guard_info_success();
+
 public slots:
     void onConnected();
 

@@ -23,8 +23,8 @@ int main(int argc, char *argv[])
     //g.show();
     //Widget b;
     //b.show();
-    OrderWidget o;
-    o.show();
+    // OrderWidget o;
+    // o.show();
 
     return QApplication::exec();
 }

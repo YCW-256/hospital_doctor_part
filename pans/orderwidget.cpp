@@ -33,6 +33,8 @@ OrderWidget::~OrderWidget()
     delete ui;
 }
 
+
+
 void OrderWidget::init_guard_card()
 {
     for(int i=0;i<3;i++){
@@ -50,6 +52,8 @@ void OrderWidget::init_connect()
 {
     connect(ui->comboBox_department, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &OrderWidget::on_comboBox_department_currentIndexChanged);
+    connect(ui->comboBox_department, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &OrderWidget::to_get_guard);
 
     for(int i=0;i<3;i++){
         for(int j=0;j<7;j++){
@@ -81,6 +85,38 @@ void OrderWidget::init_connect()
     }
 
     //保存
+    connect(ui->save_btn,&QToolButton::clicked,this,[this](){
+        saveInfo();
+    });
+
+}
+
+void OrderWidget::saveInfo()
+{
+    CData::repix_info.resize(0);
+    HEAD head;
+    head.frag_total=0;
+    QByteArray send_data;
+    send_data.resize(2048);
+    char *p=send_data.data();
+    int pre=sizeof(HEAD);
+    int single_pack=sizeof(current_info[0][0]);
+    for(int i=0;i<3;i++){
+        for(int j=0;j<7;j++){
+            if(is_repix[i][j]){
+                qDebug()<<i<<" "<<j;
+                CData::repix_info.push_back(current_info[i][j]);
+                memcpy(p+pre,&current_info[i][j],single_pack);
+                pre+=single_pack;
+                head.frag_total++;
+            }
+        }
+    }
+    head.len=head.frag_total*single_pack;
+    head.type=SERVICE_TYPE::REPIX_GUARD;
+    qDebug()<<"head。len"<<head.len;
+    memcpy(p,&head,sizeof(head));
+    emit get_doctor_info(send_data,pre);//修改与获得共用把
 
 
 }
@@ -105,12 +141,39 @@ void OrderWidget::on_comboBox_department_currentIndexChanged(int index)
     memcpy(data.data(), &head, sizeof(HEAD));
     memcpy(data.data() + sizeof(HEAD), &req, sizeof(req));
     emit get_doctor_info(data,send_size);
+
 }
 
 void OrderWidget::on_comboBox_doctor_currentIndexChanged(int index)
 {
     QString text = ui->comboBox_doctor->currentText();
     qDebug() << "【医生下拉框】当前文本:" << text << "，索引(编号):" << index;
+}
+
+void OrderWidget::to_get_guard(int index)
+{
+    HEAD head;
+    head.type=SERVICE_TYPE::GET_GUARD;
+    GET_GUARD_REQ req;
+    char u[10] = {0};
+    QString txt = ui->comboBox_department->currentText();
+    snprintf(u, sizeof(u), "%s", txt.toUtf8().constData());
+    strcpy(req.department, u);
+    req.id=CData::m_id;
+    char *day_time=req.start_day;
+    QString qday_time = MyUtils::getThisWeekMondayStr();
+    // 拷贝，带上结束符'\0'
+    QByteArray ba = qday_time.toLatin1();
+    memcpy(day_time, ba.constData(), ba.size());
+    day_time[ba.size()] = '\0'; // 手动补0终止符
+
+    head.len=sizeof(req);
+    QByteArray send_data;
+    send_data.resize(512);
+    char *p=send_data.data();
+    memcpy(p,&head,sizeof(head));
+    memcpy(p+sizeof(head),&req,sizeof(req));
+    emit get_doctor_info(send_data,sizeof(head)+sizeof(req));
 }
 
 void OrderWidget::flush_doctor()
@@ -139,7 +202,34 @@ void OrderWidget::flush_doctor()
 
 
 
+void OrderWidget::flush_table()
+{
+    qDebug()<<"flush_table";
+    if(CData::current_widget!=this){
+        return;
+    }
 
+    auto& guards = CData::m_get_cards.guards;
+
+    for(int i=0;i<3;i++){
+        for(int j=0;j<7;j++){
+            auto &item=guards[i][j];
+            if(guards[i][j].isfree==true){
+                if(myCards[i][j]->getIsfree()==false)myCards[i][j]->switch_color();
+                myCards[i][j]->setCardInfo("","","","");
+                myCards[i][j]->setFree(true);//A
+            }
+            else{
+                myCards[i][j]->setFree(true);//B   我知道ab出都设成true会是狮山，，但to_deal_leave会取反一次并且在别处引用过，我真的不想重构了
+                QString content[4]={item.depart,myTime[item.time],"坐诊",item.name};
+                myCards[i][j]->to_deal_leave(content);
+            }
+
+
+        }
+    }
+
+}
 
 
 

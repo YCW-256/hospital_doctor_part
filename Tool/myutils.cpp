@@ -133,3 +133,10 @@ void MyUtils::weekAndDate(QLabel *labels[], GUARD_REPIX_T info[][7], QDate date)
         }
     }
 }
+
+QString MyUtils::getThisWeekMondayStr(const QDate &date)
+{
+    int day = date.dayOfWeek();
+    QDate monday = date.addDays( -(day - 1) );
+    return monday.toString("yyyy-MM-dd");
+}

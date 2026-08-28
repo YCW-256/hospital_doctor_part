@@ -79,11 +79,13 @@ void MainWindow::init_connect()
     //主到约会
     connect(sys_widget,&SysWidget::to_app_page,this,[this](){
         ui->stackedWidget->setCurrentWidget(appoint_widget);
+        CData::current_widget=appoint_widget;
         ui->treeWidget->setCurrentItem(ui->treeWidget->topLevelItem(4));
     });
     //主到值班
     connect(sys_widget,&SysWidget::to_guard_page,this,[this](){
         ui->stackedWidget->setCurrentWidget(guard_widget);
+        CData::current_widget=guard_widget;
         ui->treeWidget->setCurrentItem(ui->treeWidget->topLevelItem(3));
     });
 
@@ -92,11 +94,11 @@ void MainWindow::init_connect()
         int index = ui->treeWidget->indexOfTopLevelItem(item);
 
         switch(index){
-        case 0:ui->stackedWidget->setCurrentWidget(sys_widget);break;
+        case 0:{ui->stackedWidget->setCurrentWidget(sys_widget);CData::current_widget=sys_widget;break;}
         case 1:break;
-        case 3:ui->stackedWidget->setCurrentWidget(guard_widget);break;
-        case 4:ui->stackedWidget->setCurrentWidget(appoint_widget);break;
-        case 5:ui->stackedWidget->setCurrentWidget(order_widget);break;
+        case 3:{ui->stackedWidget->setCurrentWidget(guard_widget);CData::current_widget=guard_widget;break;}
+        case 4:{ui->stackedWidget->setCurrentWidget(appoint_widget);CData::current_widget=appoint_widget;break;}
+        case 5:{ui->stackedWidget->setCurrentWidget(order_widget);CData::current_widget=order_widget;break;}
         }
 
     });
@@ -113,6 +115,14 @@ void MainWindow::init_task_connect()
     connect(this->order_widget,&OrderWidget::get_doctor_info,this->m_socket,&SocketLink::send_data);
 
     connect(this->m_socket,&SocketLink::get_doctor_info_success,this->order_widget,&OrderWidget::flush_doctor);
+
+    connect(this->m_socket,&SocketLink::get_guard_info_success,this->order_widget,&OrderWidget::flush_table);
+    //值班查询流
+
+    connect(this->guard_widget,&GuardWidget::send_my_data,this->m_socket,&SocketLink::send_data);
+
+    connect(this->m_socket,&SocketLink::get_guard_info_success,this->guard_widget,&GuardWidget::flush_table);
+
 
 
 
@@ -147,6 +157,7 @@ void MainWindow::init_stack_widget()
     ui->stackedWidget->addWidget(order_widget);
     //设置默认页（系统页）
     ui->stackedWidget->setCurrentWidget(sys_widget);
+    CData::current_widget=sys_widget;
 
 
 }

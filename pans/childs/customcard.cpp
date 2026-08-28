@@ -11,7 +11,7 @@ CustomCard::CustomCard(const QString &department, const QString &timeSlot, const
 
     isfree=true;
     // 修改为高大于宽的比例（宽140，高180）
-    setFixedSize(140, 180);
+    //setFixedSize(140, 180);
     setAttribute(Qt::WA_StyledBackground);
     setStyleSheet("QWidget { background-color: white; border: 1px solid #A9D0F5; border-radius: 10px; }");
 
@@ -61,7 +61,7 @@ CustomCard::CustomCard(const QString &department, const QString &timeSlot, const
 void CustomCard::switch_color()
 {
     if(isfree){
-        setStyleSheet("QWidget { background-color: yellow; border: 1px solid #A9D0F5; border-radius: 10px; }");
+        setStyleSheet("QWidget { background-color: #8BB5EA; border: 1px solid #A9D0F5; border-radius: 10px; }");// 备选颜色#8BB5EA
     }
     else{
         setStyleSheet("QWidget { background-color: white; border: 1px solid #A9D0F5; border-radius: 10px; }");
@@ -83,7 +83,7 @@ void CustomCard::mousePressEvent(QMouseEvent *event)
 
 void CustomCard::to_deal_leave(const QString content[])
 {
-     switch_color();
+    switch_color();
     if(!isfree){
         setCardInfo("","","","");
     }
@@ -108,4 +108,9 @@ void CustomCard::setCardInfo(const QString &department, const QString &timeSlot,
 bool CustomCard::getIsfree()
 {
     return isfree;
+}
+
+void CustomCard::setFree(bool flag)
+{
+    this->isfree=flag;
 }

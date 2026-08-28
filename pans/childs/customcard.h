@@ -11,7 +11,7 @@ class CustomCard : public QWidget
 
 public:
 
-    explicit CustomCard(const QString &department="内科101", const QString &timeSlot="下午", const QString &event="坐诊", const QString &name="我",QWidget *parent = nullptr);
+    explicit CustomCard(const QString &department="", const QString &timeSlot="", const QString &event="", const QString &name="",QWidget *parent = nullptr);
 
     //CustomCard(QWidget *parent = nullptr);
 
@@ -20,6 +20,8 @@ public:
     void setCardInfo(const QString &department, const QString &timeSlot, const QString &event, const QString &name);
 
     bool getIsfree ();
+
+    void setFree(bool flag);
 signals:
     void clicked(); // 定义点击信号，方便外部连接处理业务
 

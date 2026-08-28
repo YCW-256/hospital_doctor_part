@@ -12,6 +12,7 @@ SOURCES += \
     MyTcp/socketlink.cpp \
     Task/businesstask.cpp \
     Task/getdepartmentdoctortask.cpp \
+    Task/getguardtask.cpp \
     Task/getinfotask.cpp \
     Task/logintask.cpp \
     Task/tologintask.cpp \
@@ -37,6 +38,7 @@ HEADERS += \
     MyTcp/socketlink.h \
     Task/businesstask.h \
     Task/getdepartmentdoctortask.h \
+    Task/getguardtask.h \
     Task/getinfotask.h \
     Task/logintask.h \
     Task/tologintask.h \

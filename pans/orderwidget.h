@@ -16,6 +16,8 @@ public:
     explicit OrderWidget(QWidget *parent = nullptr);
     ~OrderWidget();
 
+
+
 private:
     Ui::OrderWidget *ui;
 
@@ -27,22 +29,31 @@ private:
 
     void init_connect();
 
+
+
     bool is_repix[3][7];
 
     GUARD_REPIX_T current_info[3][7];
+
+    void saveInfo();
 public slots:
     void flush_doctor();
+
+    void flush_table();
 
 private slots:
     void on_comboBox_department_currentIndexChanged(int index);
 
     void on_comboBox_doctor_currentIndexChanged(int index);
 
+    void to_get_guard(int index);
 
 
 signals:
 
     void get_doctor_info(const QByteArray data,int send_size);
+
+    void repix_guard(const QByteArray data,int send_size);//修改与获得共用把
 
     void push_card_to_deal();
 

@@ -17,6 +17,10 @@ public:
     CustomCard* myCards[3][7];
 
     QLabel* dateLabels[7];
+
+    void to_get_guards();
+public slots:
+    void flush_table();
 private:
     Ui::GuardWidget *ui;
 
@@ -25,6 +29,9 @@ private:
     void init_connect();
 
     void deal_card();
+
+signals:
+    void send_my_data(const QByteArray &data,int size);
 };
 
 #endif // GUARDWIDGET_H

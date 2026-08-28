@@ -15,6 +15,10 @@ vector<APP_INFO> CData::app_info{};
 
 vector<DOCCTOR_INFO> CData::selece_department_info{};
 
+vector<GUARD_REPIX_T> CData::repix_info{};
+
+GET_GUARD_RESP CData::m_get_cards{};
+QWidget*CData::current_widget=nullptr;
 CData::CData() {
 
 
@@ -55,6 +59,10 @@ bool CData:: readJsonFile()
 
     return true;
 }
+
+
+
+
 
 
 

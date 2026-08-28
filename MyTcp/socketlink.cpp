@@ -5,6 +5,7 @@
 #include "../Task/logintask.h"
 #include "../Task/getinfotask.h"
 #include "../Task/getdepartmentdoctortask.h"
+#include "../Task/getguardtask.h"
 SocketLink::SocketLink(QObject *parent)
     : QObject{parent}
 {
@@ -100,6 +101,7 @@ void SocketLink::send_data(QByteArray send_buf,int size)
     //     qDebug()<<"socket未连接，放弃发送";
     //     return;
     // }
+    qDebug()<<"..................................................................................................................................................................";
     qint64 len=this->socket->write(send_buf,size);
     if(len>0){
         qDebug()<<"成功发送"<<len<<"字节"<<"状态:"<<QTcpSocket::ConnectedState;
@@ -143,6 +145,14 @@ void SocketLink::recv_data()
         task=new GetDepartmentDoctorTask(head.len,recv_data,nullptr);
         task->execute();
         emit get_doctor_info_success();
+        delete task;
+    }
+    else if(head.type==SERVICE_TYPE::GET_GUARD){
+        GetGuardTask *task;
+        task=new GetGuardTask(head.len,recv_data,nullptr);
+        task->execute();
+        emit get_guard_info_success();
+        qDebug()<<"发送get_guard_info_success";
         delete task;
     }
 

@@ -8,6 +8,7 @@
 #include <QDebug>
 #include <vector>
 #include "protecol.h"
+#include <QWidget>
 using namespace std;
 
 typedef struct{
@@ -37,6 +38,13 @@ public:
     //科室医生信息
     static vector<DOCCTOR_INFO>selece_department_info;
 
+    //修改的值班信息
+    static vector<GUARD_REPIX_T>repix_info;
+
+    //导入卡片
+    static GET_GUARD_RESP m_get_cards;
+
+    static QWidget* current_widget;
 };
 
 #endif // CDATA_H

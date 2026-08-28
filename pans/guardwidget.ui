@@ -66,7 +66,7 @@
           </size>
          </property>
          <property name="text">
-          <string>PushButton</string>
+          <string>获得查询</string>
          </property>
         </widget>
        </item>
