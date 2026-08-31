@@ -140,3 +140,12 @@ QString MyUtils::getThisWeekMondayStr(const QDate &date)
     QDate monday = date.addDays( -(day - 1) );
     return monday.toString("yyyy-MM-dd");
 }
+
+void MyUtils::ruleBuf(char buf[], int &p_use, int &p_now)
+{
+
+    memcpy(buf,buf+p_use,p_now-p_use);
+    p_now=p_now-p_use;
+    p_use=0;
+
+}

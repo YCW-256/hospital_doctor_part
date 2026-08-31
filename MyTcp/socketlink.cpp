@@ -6,6 +6,7 @@
 #include "../Task/getinfotask.h"
 #include "../Task/getdepartmentdoctortask.h"
 #include "../Task/getguardtask.h"
+#include "../Tool/myutils.h"
 SocketLink::SocketLink(QObject *parent)
     : QObject{parent}
 {
@@ -15,6 +16,10 @@ SocketLink::SocketLink(QObject *parent)
     connect(&timer,&QTimer::timeout,this,&SocketLink::onConnected);
     //connect(socket,&QTcpSocket::readyRead,this,&SocketLink::onReadyRead);
     connect(socket,&QTcpSocket::readyRead,this,&SocketLink::recv_data);
+    //初始化缓存区
+    memset(this->buf_data,0,sizeof(this->buf_data));
+    p_use=0;
+    p_now=0;
 }
 
 void SocketLink::connectHost(const QString &hostName, quint16 port)
@@ -116,16 +121,40 @@ void SocketLink::recv_data()
 {
     qDebug()<<"读";
     HEAD head;
-    QByteArray recv_head= socket->read(sizeof(HEAD));
-
-
-
+    QByteArray recv_head= socket->readAll();
     char *p=recv_head.data();
-    memcpy(&head,p,sizeof(HEAD));
-    QByteArray recv_data= socket->read(head.len);
-    qDebug() << "期望读取 body:" << head.len << "，实际读取:" << recv_data.size();
+    //缓存区
+    int read_len=recv_head.size();
+    if(read_len>BUF_SIZE-p_now){
+        MyUtils::ruleBuf( buf_data, p_use, p_now);
+        qDebug()<<"规范";
+
+    }
+    memcpy(buf_data+p_now,p,read_len);
+    p_now+=read_len;
+
+    if(p_now-p_use<sizeof(HEAD))
+        return;
+    memcpy(&head,buf_data+p_use,sizeof(HEAD));
+    p_use+=sizeof(HEAD);
+    if(p_now-p_use<head.len){
+        p_use-=sizeof(HEAD);
+        return;
+    }
+    QByteArray recv_data;
+    recv_data.resize(head.len);
+    char* recv_p=recv_data.data();
+    memcpy(recv_p,buf_data+p_use,head.len);
+    p_use+=head.len;
+
+
+    //qDebug() << "期望读取 body:" << head.len << "，实际读取:" << recv_data.size();
     qDebug()<<"type"<<head.type;
 
+
+
+    qDebug()<<"p_use"<<p_use<<"p_now"<<p_now;
+    qDebug()<<"head.len"<<head.len<<"sizeof(GET_GUARD_RESP)"<<sizeof(GET_GUARD_RESP)<<"head size"<<sizeof(HEAD)<<"total "<<head.len+sizeof(head);
     if(head.type==SERVICE_TYPE::DOCTOR_LOGIN){
         LoginTask *task;
         task=new LoginTask(head.len,recv_data,nullptr);

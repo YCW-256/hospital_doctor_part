@@ -6,6 +6,8 @@
 #include "protecol.h"
 #include "QTimer"
 #include "QByteArray"
+
+#define BUF_SIZE 4096
 class SocketLink : public QObject
 {
     Q_OBJECT
@@ -23,6 +25,13 @@ private:
     GETENVIR_REQ req;
     QByteArray sendData;
     QTimer timer;
+    //--------------------------缓存区元素----------------------------
+    char buf_data[BUF_SIZE];
+    int p_use;
+    int p_now;
+
+
+
 signals:
     void sendok();
     void recvok(int id, int wet, int temperature);

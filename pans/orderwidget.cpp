@@ -5,6 +5,7 @@
 #include "../MyTcp/cdata.h"
 #include <QDate>
 #include "../Tool/myutils.h"
+#include <QThread>
 QString myTime[3]={"上午","下午","晚上"};
 
 OrderWidget::OrderWidget(QWidget *parent)
@@ -173,6 +174,7 @@ void OrderWidget::to_get_guard(int index)
     char *p=send_data.data();
     memcpy(p,&head,sizeof(head));
     memcpy(p+sizeof(head),&req,sizeof(req));
+    QThread::msleep(100);
     emit get_doctor_info(send_data,sizeof(head)+sizeof(req));
 }
 
