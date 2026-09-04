@@ -1,10 +1,12 @@
 #include "loginwidget.h"
 #include "ui_loginwidget.h"
 #include "Task/tologintask.h"
-LoginWidget::LoginWidget(QWidget *parent)
+LoginWidget::LoginWidget(SocketLink *socket,QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::LoginWidget)
 {
+    this->m_socket=socket;
+
     ui->setupUi(this);
 
     init_connect();
@@ -28,7 +30,15 @@ void LoginWidget::init_connect()
         ToLoginTask *task=new ToLoginTask(ui->insuranceEdit->text(),ui->passwordEdit->text(),ui->captchaEdit->text());
         task->execute();
         emit to_login_ok(task->send_data,task->len);
+        //emit send_ok(task->send_data,task->len);
+        m_socket->send_data(task->send_data,task->len);
         delete task;
+    });
+    //适配
+    connect(this->m_socket,&SocketLink::login_success,this,[this](){
+        this->hide();
+        emit loginSuccess();
+        //this->show();
     });
 
 }

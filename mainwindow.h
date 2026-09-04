@@ -19,7 +19,9 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    SocketLink * m_socket;
+
+    explicit MainWindow(SocketLink * socket,QWidget *parent = nullptr);
     ~MainWindow() override;
 
     void init_connect();
@@ -33,9 +35,9 @@ signals:
 private:
     Ui::MainWindow *ui;
 
-    SocketLink * m_socket;
 
-    LoginWidget* login_widget;
+    LoginWidget *login_widget;
+
 
     SysWidget* sys_widget;
 

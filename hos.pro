@@ -20,6 +20,7 @@ SOURCES += \
     Tool/readutil.cpp \
     main.cpp \
     mainwindow.cpp \
+    manngerwindow.cpp \
     pans/appointwidget.cpp \
     pans/childs/chatbom.cpp \
     pans/childs/circularavatar.cpp \
@@ -45,6 +46,7 @@ HEADERS += \
     Tool/myutils.h \
     Tool/readutil.h \
     mainwindow.h \
+    manngerwindow.h \
     pans/appointwidget.h \
     pans/childs/chatbom.h \
     pans/childs/circularavatar.h \
@@ -59,6 +61,7 @@ HEADERS += \
 
 FORMS += \
     mainwindow.ui \
+    manngerwindow.ui \
     pans/appointwidget.ui \
     pans/childs/chatbom.ui \
     pans/guardwidget.ui \

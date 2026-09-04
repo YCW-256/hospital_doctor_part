@@ -8,20 +8,17 @@
 #include "Tool/readutil.h"
 #include "MyTcp/cdata.h"
 using namespace  std;
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(SocketLink * socket,QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
-
+    this->m_socket=socket;
     this->setMinimumSize(CData::current_width,CData::current_height);
 
     ui->setupUi(this);
 
-    m_socket=new SocketLink;
-    m_socket->connectHost();
-
-    login_widget=new LoginWidget;
-    login_widget->show();
+    //login_widget=new LoginWidget;
+    //login_widget->show();
     init_stack_widget();
 
     ui->treeWidget->setObjectName("treeSideMenu");
@@ -107,7 +104,7 @@ void MainWindow::init_connect()
 
 void MainWindow::init_task_connect()
 {
-    connect(this->login_widget,&LoginWidget::to_login_ok,this->m_socket,&SocketLink::send_data);
+    //connect(this->login_widget,&LoginWidget::to_login_ok,this->m_socket,&SocketLink::send_data);
 
     connect(this->appoint_widget,&AppointWidget::to_get_meet,this->m_socket,&SocketLink::send_data);
 
@@ -127,7 +124,7 @@ void MainWindow::init_task_connect()
 
 
     connect(this->m_socket,&SocketLink::login_success,this,[this](){
-        login_widget->hide();
+        //login_widget->hide();
         this->show();
     });
     //预约流

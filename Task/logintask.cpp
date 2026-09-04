@@ -17,6 +17,7 @@ void LoginTask::execute()
     char *p=data.data();
     memcpy(&resp,p,len);
     is_success=resp.result;
-    qDebug()<<"是否成功"<<resp.result<<"id"<<resp.id;
+    qDebug()<<"是否成功"<<resp.result<<"id"<<resp.id<<resp.role;
     CData::m_id=resp.id;
+    CData::m_role=resp.role;
 }

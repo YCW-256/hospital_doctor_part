@@ -150,11 +150,16 @@ void SocketLink::recv_data()
 
     //qDebug() << "期望读取 body:" << head.len << "，实际读取:" << recv_data.size();
     qDebug()<<"type"<<head.type;
-
-
-
     qDebug()<<"p_use"<<p_use<<"p_now"<<p_now;
     qDebug()<<"head.len"<<head.len<<"sizeof(GET_GUARD_RESP)"<<sizeof(GET_GUARD_RESP)<<"head size"<<sizeof(HEAD)<<"total "<<head.len+sizeof(head);
+
+    //最终兜底
+    if(p_use!=p_now){
+        p_use=0;
+        p_now=0;
+    }
+
+
     if(head.type==SERVICE_TYPE::DOCTOR_LOGIN){
         LoginTask *task;
         task=new LoginTask(head.len,recv_data,nullptr);

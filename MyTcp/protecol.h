@@ -35,6 +35,7 @@ typedef struct {
     int id;
     int result;
     char pwd[20];
+    int role;
 
 }DOCTOR_LOGIN_RESP;
 //医生获得预约

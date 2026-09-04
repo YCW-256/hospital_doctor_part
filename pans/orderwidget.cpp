@@ -174,7 +174,7 @@ void OrderWidget::to_get_guard(int index)
     char *p=send_data.data();
     memcpy(p,&head,sizeof(head));
     memcpy(p+sizeof(head),&req,sizeof(req));
-    QThread::msleep(100);
+    QThread::msleep(100);// 一定要改，暂且如此
     emit get_doctor_info(send_data,sizeof(head)+sizeof(req));
 }
 

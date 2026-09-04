@@ -30,6 +30,7 @@ public:
     static int current_width;
     static int current_height;
     static int m_id;
+    static int m_role;
     //-----------------预约信息---------------------
 
     static vector<APP_INFO> app_info;
