@@ -79,6 +79,7 @@ private:
     QPushButton *m_smartBtn;   // 智能排班（弹窗入口）
     QPushButton *m_nextBtn;
     QScrollArea *m_timeBar;   // 固定顶部时间栏
+    QWidget     *m_timeLine = nullptr; // 时间栏与下方排班卡片之间的分隔横线
     QScrollArea *m_scroll;    // 右侧表格（横向+纵向滚动）
     QScrollArea *m_nameScroll;// 左侧固定医生名列（纵向随表格同步）
     QVBoxLayout *m_nameLayout;// 医生名纵向排列

@@ -6,6 +6,8 @@
 #include "../MyTcp/protecol.h"
 #include <QComboBox>
 #include <QPushButton>
+#include <QStyle>
+#include <QSize>
 #include <QThread>
 #include <QTimer>
 #include <QScrollArea>
@@ -71,6 +73,12 @@ DoctorOrder::DoctorOrder(QWidget *parent)
     buildShell();
     refreshDates();     // 时间栏先按当前周显示，与是否查询医生无关
     rebuildContent();
+
+    // 初始未选科室：时间栏与分隔线不显示
+    if (m_timeBar)
+        m_timeBar->hide();
+    if (m_timeLine)
+        m_timeLine->hide();
 }
 
 DoctorOrder::~DoctorOrder()
@@ -90,25 +98,59 @@ void DoctorOrder::buildShell()
     root->setContentsMargins(0, 0, 0, 0);
     root->setSpacing(0);
 
-    // ---------- 顶部工具条：上一周 | 科室 | 保存修改 | 批量复制 | 智能排班 | ... | 下一周 ----------
+    // ---------- 顶部工具条：◀ | 科室 | 保存修改 | 批量复制排班 | 智能排班 | ... | ▶ ----------
     QWidget *bar = new QWidget(this);
     QHBoxLayout *bl = new QHBoxLayout(bar);
     bl->setContentsMargins(16, 10, 16, 6);
     bl->setSpacing(10);
 
-    m_prevBtn = new QPushButton("上一周", bar);
+    // 文本按钮统一圆角浅蓝风格（字体黑色）
+    const QString actQss =
+        "QPushButton { background:#FFFFFF; border:1px solid #B7D4F2; border-radius:8px;"
+        " color:#000000; font-size:13px; padding:0 14px; }"
+        "QPushButton:hover { background:#E8F2FC; border-color:#2F80ED; }"
+        "QPushButton:pressed { background:#D6E6F5; }"
+        "QPushButton:disabled { color:#9FB8D2; background:#F0F4F9; border-color:#D8E4F0; }";
+
+    // 翻页按钮：纯图标（◀ 上一周 / ▶ 下一周），悬停高亮
+    auto makeNavBtn = [this, bar](QStyle::StandardPixmap px, const QString &tip) {
+        QPushButton *btn = new QPushButton(bar);
+        btn->setIcon(style()->standardIcon(px));
+        btn->setIconSize(QSize(18, 18));
+        btn->setToolTip(tip);
+        btn->setFixedSize(38, 32);
+        btn->setCursor(Qt::PointingHandCursor);
+        btn->setStyleSheet(
+            "QPushButton { background:#FFFFFF; border:1px solid #B7D4F2; border-radius:8px; }"
+            "QPushButton:hover { background:#E8F2FC; border-color:#2F80ED; }"
+            "QPushButton:pressed { background:#D6E6F5; }"
+            "QPushButton:disabled { background:#F0F4F9; border-color:#D8E4F0; }");
+        return btn;
+    };
+    m_prevBtn = makeNavBtn(QStyle::SP_ArrowLeft, QStringLiteral("上一周"));
+    m_nextBtn = makeNavBtn(QStyle::SP_ArrowRight, QStringLiteral("下一周"));
+
     m_deptCombo = new QComboBox(bar);
     m_deptCombo->addItem("科室");    // 占位项(index 0)，不触发查询
     m_deptCombo->addItem("内科");
     m_deptCombo->addItem("外科");
-    m_saveBtn = new QPushButton("保存修改", bar);
-    m_copyBtn = new QPushButton("批量复制排班", bar);
-    m_smartBtn = new QPushButton("智能排班", bar);
-    m_nextBtn = new QPushButton("下一周", bar);
+    m_deptCombo->setMinimumHeight(32);
+    m_deptCombo->setCursor(Qt::PointingHandCursor);
+    m_deptCombo->setStyleSheet(
+        "QComboBox { background:#FFFFFF; border:1px solid #B7D4F2; border-radius:8px;"
+        " padding:0 10px; color:#000000; font-size:13px; }"
+        "QComboBox:hover { border-color:#2F80ED; }"
+        "QComboBox::drop-down { border:none; width:0px; }"
+        "QComboBox::down-arrow { image:none; }");
 
-    for (QPushButton *btn : {m_prevBtn, m_saveBtn, m_copyBtn, m_smartBtn, m_nextBtn})
-        btn->setMinimumHeight(30);
-    m_deptCombo->setMinimumHeight(30);
+    m_saveBtn = new QPushButton(QStringLiteral("保存修改"), bar);
+    m_copyBtn = new QPushButton(QStringLiteral("批量复制排班"), bar);
+    m_smartBtn = new QPushButton(QStringLiteral("智能排班"), bar);
+    for (QPushButton *b : {m_saveBtn, m_copyBtn, m_smartBtn}) {
+        b->setMinimumHeight(32);
+        b->setCursor(Qt::PointingHandCursor);
+        b->setStyleSheet(actQss);
+    }
 
     bl->addWidget(m_prevBtn);
     bl->addWidget(m_deptCombo);
@@ -174,7 +216,7 @@ void DoctorOrder::buildShell()
         QLabel *date = new QLabel(QString(), timeContent);
         date->setAlignment(Qt::AlignCenter);
         date->setFixedWidth(kDayW);
-        date->setStyleSheet("border: none; font-size: 13px; font-weight: bold; color: #1E70BF;");
+        date->setStyleSheet("border: none; font-size: 13px; font-weight: bold; color: #000000;");
         tl->addWidget(date);
         m_dateLabels.push_back(date);
     }
@@ -184,6 +226,12 @@ void DoctorOrder::buildShell()
     timeContent->setMinimumWidth(timeW);
     m_timeBar->setWidget(timeContent);
     rl->addWidget(m_timeBar);
+
+    // 时间栏与下方排班卡片之间的分隔横线（浅蓝），未选科室时整条隐藏
+    m_timeLine = new QWidget(right);
+    m_timeLine->setFixedHeight(2);
+    m_timeLine->setStyleSheet("background: #B7D4F2; border: none;");
+    rl->addWidget(m_timeLine);
 
     m_scroll = new QScrollArea(right);
     m_scroll->setWidgetResizable(true);
@@ -232,7 +280,8 @@ void DoctorOrder::rebuildContent()
     QWidget *content = new QWidget(m_scroll);
     QGridLayout *grid = new QGridLayout(content);
     // 外边距/行距与医生名列(左侧)保持一致，保证行高对齐
-    grid->setContentsMargins(16, 8, 16, 16);
+    // 上边距用 6：因为卡片区上方多了一条 2px 分隔横线，整体应比医生名列少留 2px 才对齐
+    grid->setContentsMargins(16, 6, 16, 16);
     grid->setHorizontalSpacing(kGap);
     grid->setVerticalSpacing(kGap);
 
@@ -316,7 +365,13 @@ void DoctorOrder::nextWeek()
 
 void DoctorOrder::onDeptChanged(int index)
 {
-    if (index <= 0)
+    // 未选科室(占位"科室")时：不显示时间栏与其下分隔线
+    const bool hasDept = index > 0;
+    if (m_timeBar)
+        m_timeBar->setVisible(hasDept);
+    if (m_timeLine)
+        m_timeLine->setVisible(hasDept);
+    if (!hasDept)
         return; // 占位项"科室"不查询
 
     QString dept = m_deptCombo->currentText();
