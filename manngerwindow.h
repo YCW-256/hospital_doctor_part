@@ -3,17 +3,16 @@
 
 #include <QMainWindow>
 #include "MyTcp/socketlink.h"
-#include "pans/loginwidget.h"
 #include "pans/syswidget.h"
-#include "pans/appointwidget.h"
-#include "pans/guardwidget.h"
-#include "pans/orderwidget.h"
+#include "pans/doctororder.h"
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class ManngerWindow;
 }
 QT_END_NAMESPACE
 
+// 管理员窗口：保留左侧导航 + 首页(SysWidget)，业务页只放一个排班页 DoctorOrder。
+// 已移除从用户窗口拷贝过来的 appoint/guard/order 三页。
 class ManngerWindow : public QMainWindow
 {
     Q_OBJECT
@@ -30,22 +29,11 @@ public:
 
     void init_stack_widget();
 
-signals:
-    void sendok(QByteArray,int size);
 private:
     Ui::ManngerWindow *ui;
 
-
-    LoginWidget *login_widget;
-
-
     SysWidget* sys_widget;
 
-    AppointWidget* appoint_widget;
-
-    GuardWidget* guard_widget;
-
-    OrderWidget* order_widget;
-
+    DoctorOrder* doctor_order;
 };
 #endif // MANNGERWINDOW_H
