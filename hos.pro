@@ -27,6 +27,8 @@ SOURCES += \
     pans/childs/customcard.cpp \
     pans/childs/mannger/copyschedule.cpp \
     pans/childs/mannger/doctorcard.cpp \
+    pans/childs/mannger/smartplan.cpp \
+    pans/childs/mannger/smartschedule.cpp \
     pans/childs/medicalcardwidget.cpp \
     pans/childs/selbtn.cpp \
     pans/doctororder.cpp \
@@ -56,6 +58,8 @@ HEADERS += \
     pans/childs/customcard.h \
     pans/childs/mannger/copyschedule.h \
     pans/childs/mannger/doctorcard.h \
+    pans/childs/mannger/smartplan.h \
+    pans/childs/mannger/smartschedule.h \
     pans/childs/medicalcardwidget.h \
     pans/childs/selbtn.h \
     pans/doctororder.h \

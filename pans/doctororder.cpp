@@ -1,6 +1,7 @@
 #include "doctororder.h"
 #include "childs/mannger/doctorcard.h"
 #include "childs/mannger/copyschedule.h"
+#include "childs/mannger/smartschedule.h"
 #include "../MyTcp/cdata.h"
 #include "../MyTcp/protecol.h"
 #include <QComboBox>
@@ -50,6 +51,7 @@ DoctorOrder::DoctorOrder(QWidget *parent)
     , m_prevBtn(nullptr)
     , m_saveBtn(nullptr)
     , m_copyBtn(nullptr)
+    , m_smartBtn(nullptr)
     , m_nextBtn(nullptr)
     , m_timeBar(nullptr)
     , m_scroll(nullptr)
@@ -88,7 +90,7 @@ void DoctorOrder::buildShell()
     root->setContentsMargins(0, 0, 0, 0);
     root->setSpacing(0);
 
-    // ---------- 顶部工具条：上一周 | 选择科室 | 保存修改 | ... | 下一周 ----------
+    // ---------- 顶部工具条：上一周 | 科室 | 保存修改 | 批量复制 | 智能排班 | ... | 下一周 ----------
     QWidget *bar = new QWidget(this);
     QHBoxLayout *bl = new QHBoxLayout(bar);
     bl->setContentsMargins(16, 10, 16, 6);
@@ -101,9 +103,10 @@ void DoctorOrder::buildShell()
     m_deptCombo->addItem("外科");
     m_saveBtn = new QPushButton("保存修改", bar);
     m_copyBtn = new QPushButton("批量复制排班", bar);
+    m_smartBtn = new QPushButton("智能排班", bar);
     m_nextBtn = new QPushButton("下一周", bar);
 
-    for (QPushButton *btn : {m_prevBtn, m_saveBtn, m_copyBtn, m_nextBtn})
+    for (QPushButton *btn : {m_prevBtn, m_saveBtn, m_copyBtn, m_smartBtn, m_nextBtn})
         btn->setMinimumHeight(30);
     m_deptCombo->setMinimumHeight(30);
 
@@ -111,6 +114,7 @@ void DoctorOrder::buildShell()
     bl->addWidget(m_deptCombo);
     bl->addWidget(m_saveBtn);
     bl->addWidget(m_copyBtn);
+    bl->addWidget(m_smartBtn);
     bl->addStretch();            // 上一周靠左、下一周靠右
     bl->addWidget(m_nextBtn);
     root->addWidget(bar);
@@ -205,6 +209,7 @@ void DoctorOrder::buildShell()
     connect(m_nextBtn, &QPushButton::clicked, this, &DoctorOrder::nextWeek);
     connect(m_saveBtn, &QPushButton::clicked, this, &DoctorOrder::saveInfo);
     connect(m_copyBtn, &QPushButton::clicked, this, &DoctorOrder::openCopyDialog);
+    connect(m_smartBtn, &QPushButton::clicked, this, &DoctorOrder::openSmartDialog);
     connect(m_deptCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &DoctorOrder::onDeptChanged);
 }
@@ -391,12 +396,15 @@ void DoctorOrder::sendGuardRequest()
 
 void DoctorOrder::applyRoster()
 {
+    qDebug() << "applyRoster::开始 医生行" << m_docNames.size() << "卡" << m_cards.size();
     for (int r = 0; r < m_docNames.size(); ++r) {
         for (int d = 0; d < 7; ++d) {
             for (int k = 0; k < 3; ++k) {
                 int idx = r * 21 + d * 3 + k;
-                if (idx >= m_cards.size())
+                if (idx >= m_cards.size()) {
+                    qDebug() << "applyRoster::提前退出 idx" << idx << ">= 卡数" << m_cards.size();
                     return;
+                }
                 DoctorSlotCard *card = m_cards[idx];
                 const GUARD_REPIX_T &slot = m_info[k][d];
                 QString duty = QString::fromUtf8(slot.name).trimmed();
@@ -417,6 +425,7 @@ void DoctorOrder::applyRoster()
             }
         }
     }
+    qDebug() << "applyRoster::结束";
 }
 
 void DoctorOrder::onCardToggled(int r, int d, int k)
@@ -560,11 +569,15 @@ void DoctorOrder::flush_doctor()
 void DoctorOrder::flush_table()
 {
     qDebug() << "DoctorOrder flush_table";
-    if (CData::current_widget != this)
+    if (CData::current_widget != this) {
+        qDebug() << "flush_table::跳过(不在本页)";
         return;
-
+    }
+    qDebug() << "flush_table::memcpy前";
     memcpy(m_info, &CData::m_get_cards.guards, sizeof(m_info));
+    qDebug() << "flush_table::memcpy后,调用applyRoster";
     applyRoster();
+    qDebug() << "flush_table::完成";
 }
 
 void DoctorOrder::openCopyDialog()
@@ -712,6 +725,7 @@ void DoctorOrder::startCopyWeeks(int weeks)
 
     // 发送期间锁定相关控件，逐包由定时器节奏发出（间隔等同每包之间等待）
     m_copyBtn->setEnabled(false);
+    m_smartBtn->setEnabled(false);
     m_saveBtn->setEnabled(false);
     m_prevBtn->setEnabled(false);
     m_nextBtn->setEnabled(false);
@@ -724,6 +738,7 @@ void DoctorOrder::sendNextCopyPack()
     if (m_copyQueue.isEmpty()) {
         m_copyTimer->stop();
         m_copyBtn->setEnabled(true);
+        m_smartBtn->setEnabled(true);
         m_saveBtn->setEnabled(true);
         m_prevBtn->setEnabled(true);
         m_nextBtn->setEnabled(true);
@@ -735,4 +750,87 @@ void DoctorOrder::sendNextCopyPack()
     QByteArray data = m_copyQueue.takeFirst();
     qDebug() << "批量复制：发送一周 REPIX_GUARD，字节" << data.size();
     emit save_guard_info(data, data.size());
+}
+
+void DoctorOrder::openSmartDialog()
+{
+    if (m_deptCombo->currentIndex() <= 0) {
+        QMessageBox::information(this, "智能排班", "请先选择科室并加载排班，再使用智能排班。");
+        return;
+    }
+    if (m_docNames.isEmpty()) {
+        QMessageBox::information(this, "智能排班", "当前科室没有医生名单，无法智能排班。");
+        return;
+    }
+
+    // 周/科室/医生/现有排班 都以快照传入，进入智能排班界面不再向服务器发请求
+    SmartScheduleDialog dlg(m_monday, m_deptCombo->currentText(),
+                            m_docNames, m_docIds, m_info, this);
+    if (dlg.exec() == QDialog::Accepted) {
+        GUARD_REPIX_T plan[3][7];
+        dlg.resultPlan(plan);
+        applySmartPlan(plan);
+    }
+}
+
+void DoctorOrder::applySmartPlan(const GUARD_REPIX_T plan[3][7])
+{
+    // 逐格对比新旧排班，只有“班次发生变化”的格才发包（空->空不打扰服务器；
+    // 覆盖模式里被清掉的旧值班会以 isfree=true 发出以清除目标周）
+    GUARD_REPIX_T oldInfo[3][7];
+    memcpy(oldInfo, m_info, sizeof(oldInfo));
+
+    auto sameDuty = [](const GUARD_REPIX_T &a, const GUARD_REPIX_T &b) -> bool {
+        bool oa = !a.isfree;
+        bool ob = !b.isfree;
+        if (oa != ob)
+            return false;
+        if (!oa)
+            return true;   // 都是空
+        if (a.id != b.id)
+            return false;
+        return QString::fromUtf8(a.name).trimmed() == QString::fromUtf8(b.name).trimmed();
+    };
+
+    memcpy(m_info, plan, sizeof(m_info));
+
+    const int single_pack = sizeof(GUARD_REPIX_T);
+    QByteArray data;
+    data.resize(sizeof(HEAD) + 21 * single_pack);
+    memset(data.data(), 0, data.size());
+    char *p = data.data();
+    HEAD head;
+    memset(&head, 0, sizeof(head));
+    head.type = SERVICE_TYPE::REPIX_GUARD;
+    head.is_fragment = false;
+
+    int pre = sizeof(HEAD);
+    int fragCount = 0;
+    for (int d = 0; d < 7; ++d) {
+        for (int k = 0; k < 3; ++k) {
+            if (sameDuty(oldInfo[k][d], m_info[k][d]))
+                continue;
+            memcpy(p + pre, &m_info[k][d], single_pack);
+            pre += single_pack;
+            ++fragCount;
+        }
+    }
+
+    // 排班基线整体变了：清掉旧“保存修改”标记，避免把过时改动再发一遍
+    for (DocModified &row : m_modified)
+        memset(row.flag, 0, sizeof(row.flag));
+
+    if (fragCount <= 0) {
+        qDebug() << "智能排班：结果与当前排班一致，无需发送";
+        applyRoster();
+        return;
+    }
+    head.frag_total = fragCount;
+    head.len = fragCount * single_pack;
+    memcpy(p, &head, sizeof(HEAD));
+    data.resize(pre);
+
+    qDebug() << "智能排班：应用并发送 REPIX_GUARD，改动格" << fragCount;
+    emit save_guard_info(data, data.size());
+    applyRoster();
 }

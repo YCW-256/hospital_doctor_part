@@ -21,7 +21,8 @@ class DoctorSlotCard;
 //       右侧 顶部固定时间栏(周一~周日日期，横向与表格联动) + 可滚动表格
 // 表格：横轴=7 天，每天展开 上午/下午/晚上 三张无间距瓦片卡，天与天之间留间距。
 // 默认从今天所在周的周一开始，上一周/下一周 翻周。
-// 目前只接通"选择科室->查询医生(SELECT_DOCTOR)"填充医生名；保存/格子内容为占位。
+// 已接：选科室查医生(SELECT_DOCTOR)+本周排班(GET_GUARD)、点卡片指派/取消、
+//      保存修改、批量复制排班(startCopyWeeks/定时器逐包)、智能排班(SmartScheduleDialog)。
 class DoctorOrder : public QWidget
 {
     Q_OBJECT
@@ -65,6 +66,8 @@ private:
     void openCopyDialog();  // 弹“批量复制排班”对话框，确认后交给 startCopyWeeks
     void startCopyWeeks(int weeks); // 把当前展示周整周打包成 weeks 个 REPIX_GUARD（每周一包）排队
     void sendNextCopyPack();        // 定时器节奏：逐包发 REPIX_GUARD，队列空则恢复按钮
+    void openSmartDialog(); // 弹“智能排班”对话框（数据走快照，不再发服务器请求）
+    void applySmartPlan(const GUARD_REPIX_T plan[3][7]); // 应用智能排班结果：按与旧排班的差异发 REPIX
 
     // 由 m_monday 算第 offset 天(0=周一)的日期文本，如 "周一\n8月31日"
     static QString dateText(const QDate &monday, int offset);
@@ -73,6 +76,7 @@ private:
     QPushButton *m_prevBtn;
     QPushButton *m_saveBtn;
     QPushButton *m_copyBtn;    // 批量复制排班（弹窗入口）
+    QPushButton *m_smartBtn;   // 智能排班（弹窗入口）
     QPushButton *m_nextBtn;
     QScrollArea *m_timeBar;   // 固定顶部时间栏
     QScrollArea *m_scroll;    // 右侧表格（横向+纵向滚动）
