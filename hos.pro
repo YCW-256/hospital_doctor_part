@@ -25,6 +25,7 @@ SOURCES += \
     pans/childs/chatbom.cpp \
     pans/childs/circularavatar.cpp \
     pans/childs/customcard.cpp \
+    pans/childs/mannger/copyschedule.cpp \
     pans/childs/mannger/doctorcard.cpp \
     pans/childs/medicalcardwidget.cpp \
     pans/childs/selbtn.cpp \
@@ -53,6 +54,7 @@ HEADERS += \
     pans/childs/chatbom.h \
     pans/childs/circularavatar.h \
     pans/childs/customcard.h \
+    pans/childs/mannger/copyschedule.h \
     pans/childs/mannger/doctorcard.h \
     pans/childs/medicalcardwidget.h \
     pans/childs/selbtn.h \

@@ -1,16 +1,19 @@
 #include "doctororder.h"
 #include "childs/mannger/doctorcard.h"
+#include "childs/mannger/copyschedule.h"
 #include "../MyTcp/cdata.h"
 #include "../MyTcp/protecol.h"
 #include <QComboBox>
 #include <QPushButton>
 #include <QThread>
+#include <QTimer>
 #include <QScrollArea>
 #include <QScrollBar>
 #include <QGridLayout>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QMessageBox>
 #include <QStringList>
 #include <QFrame>
 #include <QLayoutItem>
@@ -46,14 +49,21 @@ DoctorOrder::DoctorOrder(QWidget *parent)
     , m_deptCombo(nullptr)
     , m_prevBtn(nullptr)
     , m_saveBtn(nullptr)
+    , m_copyBtn(nullptr)
     , m_nextBtn(nullptr)
     , m_timeBar(nullptr)
     , m_scroll(nullptr)
     , m_nameScroll(nullptr)
     , m_nameLayout(nullptr)
+    , m_copyTimer(nullptr)
 {
     QDate today = QDate::currentDate();
     m_monday = today.addDays(-(today.dayOfWeek() - 1)); // 默认从今天所在周的周一开始
+
+    // 批量复制逐周发送的节奏定时器（代替连发包之间的 sleep，界面不卡）
+    m_copyTimer = new QTimer(this);
+    m_copyTimer->setInterval(250);
+    connect(m_copyTimer, &QTimer::timeout, this, &DoctorOrder::sendNextCopyPack);
 
     initInfo();
     buildShell();
@@ -90,15 +100,17 @@ void DoctorOrder::buildShell()
     m_deptCombo->addItem("内科");
     m_deptCombo->addItem("外科");
     m_saveBtn = new QPushButton("保存修改", bar);
+    m_copyBtn = new QPushButton("批量复制排班", bar);
     m_nextBtn = new QPushButton("下一周", bar);
 
-    for (QPushButton *btn : {m_prevBtn, m_saveBtn, m_nextBtn})
+    for (QPushButton *btn : {m_prevBtn, m_saveBtn, m_copyBtn, m_nextBtn})
         btn->setMinimumHeight(30);
     m_deptCombo->setMinimumHeight(30);
 
     bl->addWidget(m_prevBtn);
     bl->addWidget(m_deptCombo);
     bl->addWidget(m_saveBtn);
+    bl->addWidget(m_copyBtn);
     bl->addStretch();            // 上一周靠左、下一周靠右
     bl->addWidget(m_nextBtn);
     root->addWidget(bar);
@@ -192,6 +204,7 @@ void DoctorOrder::buildShell()
     connect(m_prevBtn, &QPushButton::clicked, this, &DoctorOrder::prevWeek);
     connect(m_nextBtn, &QPushButton::clicked, this, &DoctorOrder::nextWeek);
     connect(m_saveBtn, &QPushButton::clicked, this, &DoctorOrder::saveInfo);
+    connect(m_copyBtn, &QPushButton::clicked, this, &DoctorOrder::openCopyDialog);
     connect(m_deptCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &DoctorOrder::onDeptChanged);
 }
@@ -552,4 +565,174 @@ void DoctorOrder::flush_table()
 
     memcpy(m_info, &CData::m_get_cards.guards, sizeof(m_info));
     applyRoster();
+}
+
+void DoctorOrder::openCopyDialog()
+{
+    if (m_deptCombo->currentIndex() <= 0) {
+        QMessageBox::information(this, "批量复制排班",
+                                 "请先选择科室并加载排班，再进行批量复制。");
+        return;
+    }
+
+    CopyScheduleDialog dlg(m_monday, m_deptCombo->currentText(), this);
+    if (dlg.exec() == QDialog::Accepted)
+        startCopyWeeks(dlg.copyWeeks());
+}
+
+void DoctorOrder::startCopyWeeks(int weeks)
+{
+    if (weeks <= 0)
+        return;
+
+    // 先把当前展示周的排班整体快照下来，发送过程中翻页/改卡也不受影响
+    GUARD_REPIX_T src[3][7];
+    memcpy(src, m_info, sizeof(src));
+
+    const int single_pack = sizeof(GUARD_REPIX_T);
+    m_copyQueue.clear();
+
+    // ===== 方案A：行驱动直取 id，不做“按名字在表里反查 id” =====
+    // 界面把每个值班格画在某一个医生行里，而每行医生的 id 是 SELECT_DOCTOR 直接下发的
+    // (m_docIds)。先把每格归属到某一行解析出来（同一源周每周都一样，只解析一次）：
+    //   owner[d][k] >=0  第 d 天第 k 时段由“本行医生”值班，复制时 id 直接取 m_docIds[owner]
+    //                -1  空档（目标周发 isfree=true 占位清除）
+    //                -2  值班医生在本科室医生表里找不到，或两行医生同名(重名无法区分身份)
+    //                    → 该格宁可不发（目标周保持原样），也绝不发一个 id=0 的值班出去
+    int owner[7][3];
+    int occupiedTotal = 0;      // 源周值班格总数
+    QStringList skipNames;      // 被跳过(无法归属/重名)的值班医生名，最多记 8 个
+
+    for (int d = 0; d < 7; ++d) {
+        for (int k = 0; k < 3; ++k) {
+            const GUARD_REPIX_T &cell = src[k][d];
+            if (cell.isfree) {
+                owner[d][k] = -1;
+                continue;
+            }
+
+            ++occupiedTotal;
+            QString cellName = QString::fromUtf8(cell.name).trimmed();
+            int hit = -1;       // 匹配到的医生行
+            bool dup = false;   // 多行医生同名都匹配 -> 重名，无法判断是哪一个
+            for (int r = 0; r < m_docNames.size() && r < m_docIds.size(); ++r) {
+                if (m_docNames[r].trimmed() != cellName)
+                    continue;
+                if (hit >= 0) { dup = true; break; }
+                hit = r;
+            }
+            if (dup || hit < 0) {
+                owner[d][k] = -2;
+                if (skipNames.size() < 8 && !skipNames.contains(cellName))
+                    skipNames << cellName;
+            }
+            else {
+                owner[d][k] = hit;
+            }
+        }
+    }
+
+    if (!skipNames.isEmpty())
+        qDebug().noquote() << "批量复制警告：以下值班槽无法确定医生身份，已跳过不发(绝不发 id=0): "
+                           << skipNames.join(", ");
+
+    // ===== 逐周打包：每周一个 REPIX_GUARD 包，可归属的格子全部带上 =====
+    QStringList rowIdZeroNames; // 医生行 id 本身为 0（服务端医生表下发的 id 就是 0）
+    for (int w = 1; w <= weeks; ++w) {
+        QDate targetMonday = m_monday.addDays(7 * w);
+
+        QByteArray data;
+        data.resize(sizeof(HEAD) + 21 * single_pack);
+        memset(data.data(), 0, data.size());
+
+        HEAD head;
+        memset(&head, 0, sizeof(head));
+        head.type = SERVICE_TYPE::REPIX_GUARD;
+        head.is_fragment = false;
+
+        char *p = data.data();
+        int pre = sizeof(HEAD);
+        int fragCount = 0;
+        for (int d = 0; d < 7; ++d) {
+            for (int k = 0; k < 3; ++k) {
+                int r = owner[d][k];
+                if (r == -2)            // 无法归属/重名：本格不发，目标周保持原样
+                    continue;
+
+                // 逐槽显式重建：date=目标日、time=时段 k 必须写对，
+                // 空槽是清除指令，若沿用源空槽里脏的 time 字段可能清错时段的格子
+                GUARD_REPIX_T slot;
+                memset(&slot, 0, sizeof(slot));
+                copyCStr(slot.date, sizeof(slot.date),
+                         targetMonday.addDays(d).toString("yyyy-MM-dd"));
+                slot.time = k;
+                if (r >= 0) {
+                    slot.isfree = false;
+                    slot.id = (r < m_docIds.size()) ? m_docIds[r] : 0;  // 直接取本行医生 id
+                    if (slot.id <= 0) {
+                        QString nm = m_docNames[r].trimmed();
+                        if (rowIdZeroNames.size() < 8 && !rowIdZeroNames.contains(nm))
+                            rowIdZeroNames << nm;
+                    }
+                    copyCStr(slot.name, sizeof(slot.name), m_docNames[r].trimmed());
+                    QString dept = QString::fromUtf8(src[k][d].depart).trimmed();
+                    if (dept.isEmpty())
+                        dept = m_deptCombo->currentText();
+                    copyCStr(slot.depart, sizeof(slot.depart), dept);
+                }
+                else {
+                    slot.isfree = true; // 空档：占位，整周覆盖时清除目标周对应格子
+                }
+                memcpy(p + pre, &slot, single_pack);
+                pre += single_pack;
+                ++fragCount;
+            }
+        }
+
+        if (fragCount <= 0) {
+            qDebug() << "批量复制：第" << w << "周没有任何可归属的槽，跳过不发包";
+            continue;
+        }
+        head.frag_total = fragCount;
+        head.len = fragCount * single_pack;
+        memcpy(p, &head, sizeof(HEAD));
+        data.resize(pre);   // 只保留实际用到的字节，别把尾部 0 当下一包头
+
+        m_copyQueue.append(data);
+        qDebug() << "批量复制：打包第" << w << "/" << weeks << "周，起于"
+                 << targetMonday.toString("yyyy-MM-dd") << "，" << fragCount << "槽";
+    }
+
+    // 排查用汇总
+    qDebug() << "批量复制汇总：源周值班格" << occupiedTotal << "个；跳过(找不到/重名)"
+             << skipNames.size() << "位医生；医生行 id<=0 的" << rowIdZeroNames.size()
+             << "位（医生表" << m_docNames.size() << "条）";
+    if (!rowIdZeroNames.isEmpty())
+        qDebug().noquote() << "  医生行 id 本身为 0 的医生(最多8个): " << rowIdZeroNames.join(", ");
+
+    // 发送期间锁定相关控件，逐包由定时器节奏发出（间隔等同每包之间等待）
+    m_copyBtn->setEnabled(false);
+    m_saveBtn->setEnabled(false);
+    m_prevBtn->setEnabled(false);
+    m_nextBtn->setEnabled(false);
+    m_deptCombo->setEnabled(false);
+    m_copyTimer->start();
+}
+
+void DoctorOrder::sendNextCopyPack()
+{
+    if (m_copyQueue.isEmpty()) {
+        m_copyTimer->stop();
+        m_copyBtn->setEnabled(true);
+        m_saveBtn->setEnabled(true);
+        m_prevBtn->setEnabled(true);
+        m_nextBtn->setEnabled(true);
+        m_deptCombo->setEnabled(true);
+        qDebug() << "批量复制：全部周发送完毕";
+        return;
+    }
+
+    QByteArray data = m_copyQueue.takeFirst();
+    qDebug() << "批量复制：发送一周 REPIX_GUARD，字节" << data.size();
+    emit save_guard_info(data, data.size());
 }

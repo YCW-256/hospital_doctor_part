@@ -13,6 +13,7 @@ class QComboBox;
 class QPushButton;
 class QScrollArea;
 class QVBoxLayout;
+class QTimer;
 class DoctorSlotCard;
 
 // 管理员排班页（医生 × 一周时段）
@@ -61,6 +62,9 @@ private:
     void onCardToggled(int r, int d, int k); // 点击卡片：指派/取消 该行医生
     void dumpSchedule();    // 只打印修改过的项（每行医生名+id 及其被修改时段的当前状态）
     void saveInfo();        // 参照 orderWidget：把修改过的槽位打包发 REPIX_GUARD
+    void openCopyDialog();  // 弹“批量复制排班”对话框，确认后交给 startCopyWeeks
+    void startCopyWeeks(int weeks); // 把当前展示周整周打包成 weeks 个 REPIX_GUARD（每周一包）排队
+    void sendNextCopyPack();        // 定时器节奏：逐包发 REPIX_GUARD，队列空则恢复按钮
 
     // 由 m_monday 算第 offset 天(0=周一)的日期文本，如 "周一\n8月31日"
     static QString dateText(const QDate &monday, int offset);
@@ -68,6 +72,7 @@ private:
     QComboBox   *m_deptCombo;
     QPushButton *m_prevBtn;
     QPushButton *m_saveBtn;
+    QPushButton *m_copyBtn;    // 批量复制排班（弹窗入口）
     QPushButton *m_nextBtn;
     QScrollArea *m_timeBar;   // 固定顶部时间栏
     QScrollArea *m_scroll;    // 右侧表格（横向+纵向滚动）
@@ -89,6 +94,10 @@ private:
     // （保存时只提交/打印这些修改过的位置）
     struct DocModified { bool flag[21]; };
     QVector<DocModified>   m_modified;
+
+    // 批量复制排班：逐周待发 REPIX_GUARD 包队列 + 节奏定时器（代替连发包之间的 sleep）
+    QVector<QByteArray>    m_copyQueue;
+    QTimer                *m_copyTimer;
 };
 
 #endif // DOCTORORDER_H
