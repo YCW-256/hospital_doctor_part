@@ -49,6 +49,12 @@ void ManngerWindow::init_connect()
         CData::current_widget=doctor_order;
         ui->treeWidget->setCurrentItem(ui->treeWidget->topLevelItem(5));
     });
+    //首页图标→工作统计
+    connect(sys_widget,&SysWidget::to_workstat_page,this,[this](){
+        ui->stackedWidget->setCurrentWidget(workstat_widget);
+        CData::current_widget=workstat_widget;
+        ui->treeWidget->setCurrentItem(ui->treeWidget->topLevelItem(2));
+    });
 
     connect(ui->treeWidget, &QTreeWidget::itemClicked, this, [this](QTreeWidgetItem *item, int column){
         Q_UNUSED(column);
@@ -60,6 +66,10 @@ void ManngerWindow::init_connect()
             CData::current_widget=sys_widget;
             break;
         }
+        case 2: // 工作统计
+            ui->stackedWidget->setCurrentWidget(workstat_widget);
+            CData::current_widget=workstat_widget;
+            break;
         case 3: // 值班信息
         case 5: // 值班管理(排班入口)
         case 6: // 值班信息(重复项)
@@ -67,7 +77,7 @@ void ManngerWindow::init_connect()
             CData::current_widget=doctor_order;
             break;
         default:
-            break; // 查看病例/工作统计/查看预约 暂无对应页
+            break; // 查看病例/查看预约 暂无对应页
         }
     });
 }
@@ -94,9 +104,13 @@ void ManngerWindow::init_stack_widget()
 {
     sys_widget=new SysWidget(this);
 
+    workstat_widget=new ManagerStatWidget(this);
+
     doctor_order=new DoctorOrder(this);
 
     ui->stackedWidget->addWidget(sys_widget);
+
+    ui->stackedWidget->addWidget(workstat_widget);
 
     ui->stackedWidget->addWidget(doctor_order);
     //设置默认页（系统页）

@@ -5,6 +5,7 @@
 
 class QLabel;
 class QPushButton;
+class QMouseEvent;
 
 class MedicalCardWidget : public QWidget
 {
@@ -15,6 +16,13 @@ public:
     // 提供接口，方便你动态修改卡片内容
     void setInfo(const QString &name, const QString &department, const QString &doctor,
                  const QString &time1, bool hasVisited, bool confirmed);
+
+signals:
+    // 鼠标左键点中卡片时发出（AppointWidget 里 connect 弹出“接诊详情”）
+    void cardClicked();
+
+protected:
+    void mousePressEvent(QMouseEvent *event) override;
 
 private:
     void initUI();

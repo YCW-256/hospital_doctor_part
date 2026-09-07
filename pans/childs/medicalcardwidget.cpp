@@ -4,12 +4,29 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QFrame>
+#include <QMouseEvent>
 #include "Tool/myutils.h"
 
 MedicalCardWidget::MedicalCardWidget(QWidget *parent)
     : QWidget(parent)
 {
     initUI();
+    // 整卡可点，鼠标移上显示手型
+    this->setCursor(Qt::PointingHandCursor);
+    // 让卡内纯展示控件（图标/文字/分隔线）不拦截鼠标，点击事件直达卡片本体
+    const auto passiveChildren = findChildren<QWidget *>();
+    for (QWidget *w : passiveChildren) {
+        if (qobject_cast<QLabel *>(w) || qobject_cast<QFrame *>(w))
+            w->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+    }
+}
+
+void MedicalCardWidget::mousePressEvent(QMouseEvent *event)
+{
+    // 左键点击整张卡片 → 通知外部（AppointWidget 弹出接诊详情）
+    if (event->button() == Qt::LeftButton)
+        emit cardClicked();
+    QWidget::mousePressEvent(event);
 }
 
 void MedicalCardWidget::initUI()

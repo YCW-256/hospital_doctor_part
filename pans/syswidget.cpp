@@ -38,5 +38,9 @@ void SysWidget::init_connect()
     connect(ui->toolButton_4,&QToolButton::clicked,this,[this](){
         emit to_guard_page();
     });
+    //去工作统计
+    connect(ui->toolButton_2,&QToolButton::clicked,this,[this](){
+        emit to_workstat_page();
+    });
 
 }

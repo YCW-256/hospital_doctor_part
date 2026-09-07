@@ -5,6 +5,7 @@
 #include "MyTcp/socketlink.h"
 #include "pans/syswidget.h"
 #include "pans/doctororder.h"
+#include "pans/mannger/managerstatwidget.h"
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class ManngerWindow;
@@ -35,5 +36,7 @@ private:
     SysWidget* sys_widget;
 
     DoctorOrder* doctor_order;
+
+    ManagerStatWidget* workstat_widget;   // 工作统计页（管理员端）
 };
 #endif // MANNGERWINDOW_H

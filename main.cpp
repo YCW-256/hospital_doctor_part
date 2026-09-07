@@ -15,6 +15,8 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     CData::init();
+    // 工作统计页先用预留的占位数据展示（装饰用），接入真实统计后再改为 false
+    CData::is_check = true;
     SocketLink* m_socket=new SocketLink;
     m_socket->connectHost();
     LoginWidget* login_widget = new LoginWidget(m_socket);

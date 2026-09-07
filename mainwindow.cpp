@@ -85,6 +85,12 @@ void MainWindow::init_connect()
         CData::current_widget=guard_widget;
         ui->treeWidget->setCurrentItem(ui->treeWidget->topLevelItem(3));
     });
+    //首页图标→工作统计
+    connect(sys_widget,&SysWidget::to_workstat_page,this,[this](){
+        ui->stackedWidget->setCurrentWidget(workstat_widget);
+        CData::current_widget=workstat_widget;
+        ui->treeWidget->setCurrentItem(ui->treeWidget->topLevelItem(2));
+    });
 
 
     connect(ui->treeWidget, &QTreeWidget::itemClicked, this, [this](QTreeWidgetItem *item, int column){
@@ -93,6 +99,7 @@ void MainWindow::init_connect()
         switch(index){
         case 0:{ui->stackedWidget->setCurrentWidget(sys_widget);CData::current_widget=sys_widget;break;}
         case 1:break;
+        case 2:{ui->stackedWidget->setCurrentWidget(workstat_widget);CData::current_widget=workstat_widget;break;}
         case 3:{ui->stackedWidget->setCurrentWidget(guard_widget);CData::current_widget=guard_widget;break;}
         case 4:{ui->stackedWidget->setCurrentWidget(appoint_widget);CData::current_widget=appoint_widget;break;}
         case 5:{ui->stackedWidget->setCurrentWidget(order_widget);CData::current_widget=order_widget;break;}
@@ -139,6 +146,8 @@ void MainWindow::init_stack_widget()
 {
     sys_widget=new SysWidget(this);
 
+    workstat_widget=new WorkStatWidget(this);
+
     appoint_widget=new AppointWidget;
 
     guard_widget=new GuardWidget;
@@ -146,6 +155,8 @@ void MainWindow::init_stack_widget()
     order_widget=new OrderWidget;
 
     ui->stackedWidget->addWidget(sys_widget);
+
+    ui->stackedWidget->addWidget(workstat_widget);
 
     ui->stackedWidget->addWidget(appoint_widget);
 

@@ -12,10 +12,12 @@
 using namespace std;
 
 typedef struct{
-    QString name;
-    QString time;
+    QString name;        // 患者姓名（DOCTOR_APP_RESP.PatientName）
+    QString time;        // 就诊时间/时段（DOCTOR_APP_RESP.time）
     int state;
     int meet_id;
+    QString doctorName;  // 接诊医生名（DOCTOR_APP_RESP.DoctorName，接诊详情弹窗用）
+    int patient_id;
 }APP_INFO;
 class CData
 {
@@ -32,6 +34,8 @@ public:
     static int current_height;
     static int m_id;
     static int m_role;
+    // 工作统计是否使用预留(占位)假数据：true=各统计页用随机数填充展示；false=留空等真实数据。main 里赋值。
+    static bool is_check;
     //-----------------预约信息---------------------
 
     static vector<APP_INFO> app_info;

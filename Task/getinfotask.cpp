@@ -22,6 +22,8 @@ void GetInfoTask::execute()
         CData::app_info[i].time=resp.time[i];
         CData::app_info[i].state=resp.state[i];
         CData::app_info[i].meet_id=resp.meet_id[i];
+        CData::app_info[i].doctorName=resp.DoctorName[i];
+        CData::app_info[i].patient_id=resp.patient_id[i];
         qDebug()<<"拷贝"<<CData::app_info[i].name<< CData::app_info[i].time<<"id"<<CData::app_info[i].meet_id;
     }
     qDebug()<<"一共"<<resp.count;
