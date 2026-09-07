@@ -52,6 +52,7 @@ typedef struct {
     int state[10];
     int id;
     int count;
+    int meet_id[10];
 
 }DOCTOR_APP_RESP;
 

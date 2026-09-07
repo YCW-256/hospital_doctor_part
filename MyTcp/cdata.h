@@ -15,6 +15,7 @@ typedef struct{
     QString name;
     QString time;
     int state;
+    int meet_id;
 }APP_INFO;
 class CData
 {
