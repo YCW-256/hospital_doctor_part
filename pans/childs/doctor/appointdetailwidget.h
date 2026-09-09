@@ -9,7 +9,8 @@ class QTextEdit;
 class QPushButton;
 
 // 预约卡片点击后弹出的“接诊详情”弹窗（普通医生端 AppointWidget 专用，代码式 UI，无 .ui）。
-// 展示该次预约的病人姓名、时间（日期与时段），医生在此录入 诊断 / 处方；
+// 左右布局：左侧（保持原有外观）展示该次预约的病人姓名、时间（日期与时段），医生在此录入 诊断 / 处方；
+// 右侧新增舌苔图片位 QLabel m_tongueLabel（暂无图片，默认黑底占位，后续接图后 setPixmap 显示）。
 // 底部“返回”直接关闭，“完成”先弹警告二次确认，确认后把该次预约的全量信息
 // （meet_id / doctor_id / patient_id / doctor_name / patient_name / 诊断 / 处方）qDebug 打印，
 // 再 accept()；调用方（AppointWidget）读 diagnosis()/treatPlan() 打包 DOCTOR_SET_RECORD 发出。
@@ -46,6 +47,7 @@ private:
     QLabel      *m_patientLabel;   // 患者姓名
     QLabel      *m_timeLabel;      // 时间（日期与时段）
     QLabel      *m_extraLabel;     // 医生 / 预约号 等次要信息
+    QLabel      *m_tongueLabel;    // 右侧舌苔图片位（暂无图片，黑底占位）
     QTextEdit   *m_diagnosisEdit;      // 诊断
     QTextEdit   *m_prescriptionEdit;   // 处方
     QPushButton *m_backBtn;        // 返回

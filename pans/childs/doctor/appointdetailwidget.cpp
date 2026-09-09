@@ -14,6 +14,7 @@ AppointDetailWidget::AppointDetailWidget(const MeetRecord &rec, QWidget *parent)
     , m_patientLabel(nullptr)
     , m_timeLabel(nullptr)
     , m_extraLabel(nullptr)
+    , m_tongueLabel(nullptr)
     , m_diagnosisEdit(nullptr)
     , m_prescriptionEdit(nullptr)
     , m_backBtn(nullptr)
@@ -36,11 +37,20 @@ void AppointDetailWidget::buildUi()
 {
     setWindowTitle(QStringLiteral("就诊详情"));
     setAttribute(Qt::WA_StyledBackground, true);
-    setStyleSheet("AppointDetailWidget { background: #F4FAFF; }");
-    setFixedSize(460, 520);
+    // 注意：父页(AppointWidget 等) 用 MyUtils::setBack 设置的 "QWidget{background: qlineargradient}"
+    // 会沿父子链级联进本弹窗。此处用更近的规则把本弹窗整平：窗口自身 #F4FAFF，
+    // 内部 QLabel 透明(露出窗口底色)，从而与弹窗背景一致，避免透出外层蓝白渐变。
+    setStyleSheet(
+        "AppointDetailWidget { background: #F4FAFF; }"
+        "AppointDetailWidget QLabel { background: transparent; }");
+    setFixedSize(680, 520);
 
-    QVBoxLayout *root = new QVBoxLayout(this);
-    root->setContentsMargins(22, 18, 22, 14);
+    // 主横向布局：左侧为原接诊信息 + 诊断处方（外观保持不变），右侧放舌苔图片位
+    QHBoxLayout *hMain = new QHBoxLayout(this);
+    hMain->setContentsMargins(22, 18, 22, 14);
+    hMain->setSpacing(16);
+
+    QVBoxLayout *root = new QVBoxLayout;
     root->setSpacing(10);
 
     QLabel *title = new QLabel(QStringLiteral("接诊信息"), this);
@@ -132,6 +142,33 @@ void AppointDetailWidget::buildUi()
     btnRow->addWidget(m_backBtn);
     btnRow->addWidget(m_doneBtn);
     root->addLayout(btnRow);
+
+    // 左侧整列（原内容）放入主横向布局，占满剩余宽度，外观不变
+    hMain->addLayout(root, 1);
+
+    // ---- 右侧：舌苔图片位 ----
+    QVBoxLayout *right = new QVBoxLayout;
+    right->setSpacing(8);
+
+    QLabel *tongTitle = new QLabel(QStringLiteral("舌苔图片"), this);
+    tongTitle->setStyleSheet("border: none; font-size: 14px; font-weight: bold; color: #333333;");
+    right->addWidget(tongTitle);
+
+    m_tongueLabel = new QLabel(this);
+    m_tongueLabel->setFixedSize(200, 250);
+    // 目前没有图片，默认黑底占位（后续接图片后 setPixmap 显示舌苔照）
+    m_tongueLabel->setStyleSheet(
+        "QLabel {"
+        "  background: #000000;"
+        "  border: 1px solid #B7D4F2;"
+        "  border-radius: 8px;"
+        "}");
+    m_tongueLabel->setAlignment(Qt::AlignCenter);
+    m_tongueLabel->setToolTip(QStringLiteral("舌苔图片（暂无）"));
+    right->addWidget(m_tongueLabel);
+    right->addStretch();
+
+    hMain->addLayout(right, 0);
 
     connect(m_backBtn, &QPushButton::clicked, this, &QDialog::reject);
     connect(m_doneBtn, &QPushButton::clicked, this, &AppointDetailWidget::onDone);
