@@ -8,6 +8,7 @@
 #include "pans/appointwidget.h"
 #include "pans/guardwidget.h"
 #include "pans/orderwidget.h"
+#include "pans/recordwidget.h"
 #include "pans/workstatwidget.h"
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -49,6 +50,8 @@ private:
     OrderWidget* order_widget;
 
     WorkStatWidget* workstat_widget;   // 工作统计页（普通医生端）
+
+    RecordWidget* record_widget;       // 查看病例（病历）页（普通医生端）
 
 };
 #endif // MAINWINDOW_H

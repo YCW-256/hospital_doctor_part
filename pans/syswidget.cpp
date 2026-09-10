@@ -31,6 +31,10 @@ void SysWidget::init_myTable()
 
 void SysWidget::init_connect()
 {
+    //去查看病例
+    connect(ui->toolButton,&QToolButton::clicked,this,[this](){
+        emit to_record_page();
+    });
     connect(ui->toolButton_3,&QToolButton::clicked,this,[this](){
         emit to_app_page();
     });

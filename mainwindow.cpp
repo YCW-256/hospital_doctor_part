@@ -91,6 +91,12 @@ void MainWindow::init_connect()
         CData::current_widget=workstat_widget;
         ui->treeWidget->setCurrentItem(ui->treeWidget->topLevelItem(2));
     });
+    //首页图标→查看病例
+    connect(sys_widget,&SysWidget::to_record_page,this,[this](){
+        ui->stackedWidget->setCurrentWidget(record_widget);
+        CData::current_widget=record_widget;
+        ui->treeWidget->setCurrentItem(ui->treeWidget->topLevelItem(1));
+    });
 
 
     connect(ui->treeWidget, &QTreeWidget::itemClicked, this, [this](QTreeWidgetItem *item, int column){
@@ -98,7 +104,7 @@ void MainWindow::init_connect()
 
         switch(index){
         case 0:{ui->stackedWidget->setCurrentWidget(sys_widget);CData::current_widget=sys_widget;break;}
-        case 1:break;
+        case 1:{ui->stackedWidget->setCurrentWidget(record_widget);CData::current_widget=record_widget;break;}
         case 2:{ui->stackedWidget->setCurrentWidget(workstat_widget);CData::current_widget=workstat_widget;break;}
         case 3:{ui->stackedWidget->setCurrentWidget(guard_widget);CData::current_widget=guard_widget;break;}
         case 4:{ui->stackedWidget->setCurrentWidget(appoint_widget);CData::current_widget=appoint_widget;break;}
@@ -139,6 +145,12 @@ void MainWindow::init_task_connect()
         this->appoint_widget->flush();
     });
 
+    // 【查看病例】按约定本次只做界面与本地联动，**没有上包通道**。接服务端时在这里补：
+    //   connect(this->record_widget,&RecordWidget::to_query_record,this->m_socket,&SocketLink::send_data);
+    //   connect(this->record_widget,&RecordWidget::to_save_record, this->m_socket,&SocketLink::send_data);
+    //   connect(this->m_socket,&SocketLink::xxx_success,this->record_widget,&RecordWidget::flush_table);
+    // 注意：RecordWidget 现在的两个上行信号还不带 QByteArray 入参，接的时候要一并补上组包。
+
 
 }
 
@@ -154,6 +166,8 @@ void MainWindow::init_stack_widget()
 
     order_widget=new OrderWidget;
 
+    record_widget=new RecordWidget;
+
     ui->stackedWidget->addWidget(sys_widget);
 
     ui->stackedWidget->addWidget(workstat_widget);
@@ -163,6 +177,8 @@ void MainWindow::init_stack_widget()
     ui->stackedWidget->addWidget(guard_widget);
 
     ui->stackedWidget->addWidget(order_widget);
+
+    ui->stackedWidget->addWidget(record_widget);
     //设置默认页（系统页）
     ui->stackedWidget->setCurrentWidget(sys_widget);
     CData::current_widget=sys_widget;

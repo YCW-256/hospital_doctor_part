@@ -18,6 +18,7 @@ SOURCES += \
     Task/tologintask.cpp \
     Tool/myutils.cpp \
     Tool/readutil.cpp \
+    Tool/recordpdf.cpp \
     main.cpp \
     mainwindow.cpp \
     manngerwindow.cpp \
@@ -34,6 +35,7 @@ SOURCES += \
     pans/childs/selbtn.cpp \
     pans/doctororder.cpp \
     pans/mannger/managerstatwidget.cpp \
+    pans/recordwidget.cpp \
     pans/workstatwidget.cpp \
     pans/guardwidget.cpp \
     pans/loginwidget.cpp \
@@ -53,6 +55,7 @@ HEADERS += \
     Task/tologintask.h \
     Tool/myutils.h \
     Tool/readutil.h \
+    Tool/recordpdf.h \
     mainwindow.h \
     manngerwindow.h \
     pans/appointwidget.h \
@@ -68,6 +71,7 @@ HEADERS += \
     pans/childs/selbtn.h \
     pans/doctororder.h \
     pans/mannger/managerstatwidget.h \
+    pans/recordwidget.h \
     pans/workstatwidget.h \
     pans/guardwidget.h \
     pans/loginwidget.h \

@@ -1,4 +1,5 @@
 #include "appointdetailwidget.h"
+#include "../../../Tool/recordpdf.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -17,6 +18,9 @@ AppointDetailWidget::AppointDetailWidget(const MeetRecord &rec, QWidget *parent)
     , m_tongueLabel(nullptr)
     , m_diagnosisEdit(nullptr)
     , m_prescriptionEdit(nullptr)
+    , m_exporter(nullptr)
+    , m_exporting(false)
+    , m_exportBtn(nullptr)
     , m_backBtn(nullptr)
     , m_doneBtn(nullptr)
 {
@@ -31,6 +35,25 @@ QString AppointDetailWidget::diagnosis() const
 QString AppointDetailWidget::treatPlan() const
 {
     return m_prescriptionEdit->toPlainText().trimmed();
+}
+
+bool AppointDetailWidget::exportPdfEnabled() const
+{
+    return m_exportBtn->isChecked();
+}
+
+QString AppointDetailWidget::exportedFilePath() const
+{
+    return m_exportedPath;
+}
+
+void AppointDetailWidget::reject()
+{
+    if (m_exporting) {   // 导出还没落地，先别关（Esc / 右上角 X 都会走到这里）
+        qDebug().noquote() << QStringLiteral("正在导出病历 PDF，稍候再关闭…");
+        return;
+    }
+    QDialog::reject();
 }
 
 void AppointDetailWidget::buildUi()
@@ -125,9 +148,21 @@ void AppointDetailWidget::buildUi()
 
     root->addStretch();
 
-    // 底部按钮：返回 | 完成
+    // 底部按钮：一键导出 | (弹簧) 返回 | 完成
     QHBoxLayout *btnRow = new QHBoxLayout;
     btnRow->setSpacing(10);
+
+    // “一键导出”：可选中开关，**只用黑白**（不掺其他颜色）。
+    // 未开=白底黑框黑字“一键导出”；点击后反过来=黑底白字“取消”（再点恢复）；
+    // 黑白反色同样满足“点了按钮会变色”的提示效果，且不引入任何彩色。
+    m_exportBtn = new QPushButton(QStringLiteral("一键导出"), this);
+    m_exportBtn->setCheckable(true);
+    m_exportBtn->setMinimumSize(92, 34);
+    m_exportBtn->setStyleSheet(
+        "QPushButton{ background:#FFFFFF; color:#000000; border:1px solid #000000; border-radius:6px; font-size:14px; }"
+        "QPushButton:checked{ background:#000000; color:#FFFFFF; border:1px solid #000000; }");
+    btnRow->addWidget(m_exportBtn);
+
     btnRow->addStretch();
     m_backBtn = new QPushButton(QStringLiteral("返回"), this);
     m_backBtn->setMinimumSize(92, 34);
@@ -172,6 +207,17 @@ void AppointDetailWidget::buildUi()
 
     connect(m_backBtn, &QPushButton::clicked, this, &QDialog::reject);
     connect(m_doneBtn, &QPushButton::clicked, this, &AppointDetailWidget::onDone);
+    connect(m_exportBtn, &QPushButton::toggled, this, [this]() { updateExportBtn(); });
+    updateExportBtn();
+}
+
+void AppointDetailWidget::updateExportBtn()
+{
+    const bool on = m_exportBtn->isChecked();
+    // 文字与配色随开关切换，想取消导出再点一下即可
+    m_exportBtn->setText(on ? QStringLiteral("取消") : QStringLiteral("一键导出"));
+    m_exportBtn->setToolTip(on ? QStringLiteral("已开启导出：点“完成”时会自动导出诊疗记录 PDF（再点本按钮取消）")
+                               : QStringLiteral("开启后，点“完成”时自动把本次诊疗记录导出为 PDF"));
 }
 
 void AppointDetailWidget::onDone()
@@ -187,7 +233,55 @@ void AppointDetailWidget::onDone()
         return;
 
     printAll();
-    accept();
+
+    // 没开“一键导出”就直接关；开了则走异步导出，导出结束后在回调里再 accept()
+    if (!exportPdfEnabled()) {
+        accept();
+        return;
+    }
+    startExport();
+}
+
+void AppointDetailWidget::startExport()
+{
+    // 导出是异步的（离屏 WebEngine 渲染病历页 + printToPdf），期间禁用按钮，
+    // 防止医生连点“完成”或在导出中途关窗导致页面被销毁
+    m_exportBtn->setEnabled(false);
+    m_backBtn->setEnabled(false);
+    m_doneBtn->setEnabled(false);
+    m_doneBtn->setText(QStringLiteral("导出中…"));
+    m_exporting = true;
+
+    RecordPdfData rec;
+    rec.meet_id      = m_rec.meet_id;
+    rec.doctor_id    = m_rec.doctor_id;
+    rec.patient_id   = m_rec.patient_id;
+    rec.doctor_name  = m_rec.doctor_name;
+    rec.patient_name = m_rec.patient_name;
+    rec.time         = m_rec.time;
+    rec.diagnosis    = diagnosis();
+    rec.treat_plan   = treatPlan();
+    // 舌苔图片位目前是黑底占位、没设过 pixmap，这里取到的是空图 → 病历页里该区块整块隐藏
+    rec.tongue       = m_tongueLabel->pixmap().toImage();
+
+    m_exporter = new RecordPdf(this);   // 挂在弹窗下，随弹窗一起销毁
+    connect(m_exporter, &RecordPdf::done, this, [this](const QString &filePath, const QString &err) {
+        m_exporting = false;   // 先解除封锁，下面弹提示期间才关得掉
+        m_exportedPath = filePath;
+        if (filePath.isEmpty()) {
+            // 导出失败只警告，不阻断完成就诊（诊断处方照常上包）
+            qDebug().noquote() << QStringLiteral("诊疗记录导出失败：") << err;
+            QMessageBox::warning(this, QStringLiteral("导出失败"),
+                                 QStringLiteral("诊疗记录导出 PDF 失败：\n%1\n\n本次就诊仍可正常完成。")
+                                     .arg(err.isEmpty() ? QStringLiteral("未知原因") : err));
+        } else {
+            qDebug().noquote() << QStringLiteral("诊疗记录已导出：") << filePath;
+            QMessageBox::information(this, QStringLiteral("导出成功"),
+                                     QStringLiteral("诊疗记录已导出为 PDF：\n%1").arg(filePath));
+        }
+        accept();
+    });
+    m_exporter->exportRecord(rec);
 }
 
 void AppointDetailWidget::printAll() const
