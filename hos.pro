@@ -14,6 +14,8 @@ SOURCES += \
     Task/getdepartmentdoctortask.cpp \
     Task/getguardtask.cpp \
     Task/getinfotask.cpp \
+    Task/getmedicalrecordtask.cpp \
+    Task/getmedicalrecorddetailtask.cpp \
     Task/logintask.cpp \
     Task/tologintask.cpp \
     Tool/myutils.cpp \
@@ -51,6 +53,8 @@ HEADERS += \
     Task/getdepartmentdoctortask.h \
     Task/getguardtask.h \
     Task/getinfotask.h \
+    Task/getmedicalrecordtask.h \
+    Task/getmedicalrecorddetailtask.h \
     Task/logintask.h \
     Task/tologintask.h \
     Tool/myutils.h \

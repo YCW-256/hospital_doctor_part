@@ -145,11 +145,23 @@ void MainWindow::init_task_connect()
         this->appoint_widget->flush();
     });
 
-    // 【查看病例】按约定本次只做界面与本地联动，**没有上包通道**。接服务端时在这里补：
-    //   connect(this->record_widget,&RecordWidget::to_query_record,this->m_socket,&SocketLink::send_data);
-    //   connect(this->record_widget,&RecordWidget::to_save_record, this->m_socket,&SocketLink::send_data);
-    //   connect(this->m_socket,&SocketLink::xxx_success,this->record_widget,&RecordWidget::flush_table);
-    // 注意：RecordWidget 现在的两个上行信号还不带 QByteArray 入参，接的时候要一并补上组包。
+    //查看病例流（两套都已打通）：
+    //  第一套 列表：HEAD+MEDICAL_RECORD_REQ        → GET_MEDICAL_RECORD
+    //  第二套 详情：HEAD+MEDICAL_RECORD_DETAIL_REQ → GET_MEDICAL_RECORD_DETAIL（选中某条时发）
+    connect(this->record_widget,&RecordWidget::to_query_record,this->m_socket,&SocketLink::send_data);
+    connect(this->record_widget,&RecordWidget::to_record_detail,this->m_socket,&SocketLink::send_data);
+    // 保存修改：和新增病例（appointwidget::sendRecord）发的是**同一个 DOCTOR_SET_RECORD 包**，
+    // 只差 meet_id —— 本页不关联预约，固定填 0（服务端用不上它）。fire-and-forget，无回包分支。
+    connect(this->record_widget,&RecordWidget::to_save_record,this->m_socket,&SocketLink::send_data);
+
+    // 下行：recv_data 两个分支里的 Task 已把数据写进 CData，这里回到主线程刷界面
+    //（跨线程自动队列连接，UI 只在主线程碰；pane 内部不再判 current_widget，因为切页前
+    //  结果也已经落进 CData 了，离开再回来 show 一下就够）
+    connect(this->m_socket,&SocketLink::get_medical_record_success,
+            this->record_widget,&RecordWidget::flush_table);
+    connect(this->m_socket,&SocketLink::get_medical_record_detail_success,
+            this->record_widget,&RecordWidget::flush_detail);
+
 
 
 }

@@ -20,6 +20,11 @@ vector<DOCCTOR_INFO> CData::selece_department_info{};
 vector<GUARD_REPIX_T> CData::repix_info{};
 
 GET_GUARD_RESP CData::m_get_cards{};
+
+vector<MEDICAL_RECORD_INFO> CData::medical_record_list{};
+int CData::medical_record_total=0;
+QHash<int,MEDICAL_RECORD_DETAIL_INFO> CData::medical_record_details{};
+
 QWidget*CData::current_widget=nullptr;
 CData::CData() {
 

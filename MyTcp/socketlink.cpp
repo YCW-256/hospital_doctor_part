@@ -6,6 +6,8 @@
 #include "../Task/getinfotask.h"
 #include "../Task/getdepartmentdoctortask.h"
 #include "../Task/getguardtask.h"
+#include "../Task/getmedicalrecordtask.h"
+#include "../Task/getmedicalrecorddetailtask.h"
 #include "../Tool/myutils.h"
 SocketLink::SocketLink(QObject *parent)
     : QObject{parent}
@@ -187,6 +189,22 @@ void SocketLink::recv_data()
         task->execute();
         emit get_guard_info_success();
         qDebug()<<"发送get_guard_info_success";
+        delete task;
+    }
+    else if(head.type==SERVICE_TYPE::GET_MEDICAL_RECORD){
+        // 第一套：病历列表（GetMedicalRecordTask 已把结果写进 CData::medical_record_list / _total）
+        GetMedicalRecordTask *task;
+        task=new GetMedicalRecordTask(head.len,recv_data,nullptr);
+        task->execute();
+        emit get_medical_record_success();
+        delete task;
+    }
+    else if(head.type==SERVICE_TYPE::GET_MEDICAL_RECORD_DETAIL){
+        // 第二套：病历详情（按 record_id 存进 CData::medical_record_details）
+        GetMedicalRecordDetailTask *task;
+        task=new GetMedicalRecordDetailTask(head.len,recv_data,nullptr);
+        task->execute();
+        emit get_medical_record_detail_success();
         delete task;
     }
 

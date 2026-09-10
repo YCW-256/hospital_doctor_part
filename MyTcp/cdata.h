@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include <QDebug>
+#include <QHash>
 #include <vector>
 #include "protecol.h"
 #include <QWidget>
@@ -19,6 +20,32 @@ typedef struct{
     QString doctorName;  // 接诊医生名（DOCTOR_APP_RESP.DoctorName，接诊详情弹窗用）
     int patient_id;
 }APP_INFO;
+
+// 病历【第一套·列表】的一条（MEDICAL_RECORD_LIST_ITEM 的 QString 版）
+typedef struct{
+    int record_id;         // 病历编号主键 —— 选中后第二套详情请求带的就是它
+    int patient_id;        // 患者编号
+    int state;             // 0 正常 1 作废
+    QString patient_name;  // 患者姓名
+    QString record_time;   // 病历记录时间 yyyy-MM-dd HH:mm:ss
+    QString main_symptom;  // 主要症状摘要
+}MEDICAL_RECORD_INFO;
+
+// 病历【第二套·详情】的一条（MEDICAL_RECORD_DETAIL_RESP 的 QString 版）
+typedef struct{
+    int record_id;
+    int patient_id;
+    int doctor_id;
+    int state;
+    QString patient_name;
+    QString patient_sex;
+    int patient_age;
+    QString record_time;
+    QString doctor_name;
+    QString main_symptom;
+    QString diagnosis;     // 诊断结果
+    QString treat_plan;    // 治疗方案 / 治疗意见
+}MEDICAL_RECORD_DETAIL_INFO;
 class CData
 {
 public:
@@ -49,6 +76,14 @@ public:
 
     //导入卡片
     static GET_GUARD_RESP m_get_cards;
+
+    //-----------------病历（两套协议，见 protecol.h）---------------------
+    // 第一套：列表查询结果（每次回包整体覆盖）
+    static vector<MEDICAL_RECORD_INFO> medical_record_list;
+    static int medical_record_total;                        // 符合条件总条数（resp.total，供“共 N 条”）
+    // 第二套：详情缓存，key = record_id（选中某条后按需拉取，来一条存一条）
+    static QHash<int, MEDICAL_RECORD_DETAIL_INFO> medical_record_details;
+    //-----------------病历（两套协议）---------------------
 
     static QWidget* current_widget;
 };

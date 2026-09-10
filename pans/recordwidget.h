@@ -1,6 +1,8 @@
 #ifndef RECORDWIDGET_H
 #define RECORDWIDGET_H
 
+#include <QByteArray>
+#include <QHash>
 #include <QString>
 #include <QVector>
 #include <QWidget>
@@ -9,30 +11,45 @@ class QComboBox;
 class QDateEdit;
 class QHBoxLayout;
 class QLabel;
-class QVBoxLayout;
 class QLineEdit;
 class QPushButton;
 class QSpinBox;
 class QTableWidget;
 class QTextEdit;
+class QVBoxLayout;
 
 // “查看病例（病历）”页 —— 医生端 MainWindow 左侧导航第 1 项 / 首页“查看病例”图标（toolButton）都指到这里。
-// 布局三段：
-//   ① 查询条：姓名 + 就诊日期起止 + 查询 / 重置；
-//   ② 左侧结果表：就诊日期 | 姓名 | 性别 | 年龄 | 诊断；
-//   ③ 右侧详情表单（**可修改**）：就诊日期 / 姓名 / 性别 / 年龄 / 接诊医生 / 诊断 / 治疗意见 + 保存修改 / 撤销修改。
 //
-// 【本次范围】只做界面 + 按钮信号槽：查询/重置/选中行/保存/撤销全部本地联动（过滤与改写的都是本页的占位数据），
-// **数据通信先不做** —— 不走 CData、不组包、不碰 protecol.h / socketlink；
-// 将来接服务端时的落点是：把 seed() 的占位数据换成服务端下发、并接上下面两个上行信号（代码里有 TODO 标注）。
-struct RecordRow {          // 一行病历（本地数据结构；接入服务端后由 CData 的缓存填充）
-    QString visitDate;      // 就诊日期 yyyy-MM-dd
-    QString name;           // 患者姓名
-    QString sex;            // 性别
-    int     age = 0;        // 年龄
-    QString doctor;         // 接诊医生
-    QString diagnosis;      // 诊断
-    QString treatPlan;      // 治疗意见（处方）
+// 流程照服务端的两套协议走（见 protecol.h）：
+//   ① 查询 → 第一套 GET_MEDICAL_RECORD  → 列表：就诊日期 | 姓名 | 患者编号 | 主要症状 | 状态
+//   ② 选中某行 → 第二套 GET_MEDICAL_RECORD_DETAIL（带 record_id）→ 详情：性别/年龄/接诊医生/诊断/治疗意见全文
+// 详情没到之前，右侧只显示列表已有的字段，详情字段置灰 + 提示“详情加载中”。
+//
+// 【当前状态】两套**都已打通**：发送侧 组包 + 信号 + 窗口接到 SocketLink::send_data；
+// 回包侧 recv_data 分支 → GetMedicalRecordTask/GetMedicalRecordDetailTask 写 CData →
+// *_success 信号 → 窗口调 flush_table()/flush_detail() 从 CData 灌本页。
+// 本页**不再造占位数据**（原 seed() 已删），列表/详情一律来自服务端。
+struct RecordRow {              // 第一套（列表）信息
+    int     recordId = -1;      // 病历编号（第二套请求带它）
+    int     patientId = -1;     // 患者编号
+    int     state = 0;          // 0 正常 1 作废
+    QString visitDate;          // 病历记录时间 yyyy-MM-dd HH:mm:ss（列表里按日期展示）
+    QString name;               // 患者姓名
+    QString mainSymptom;        // 主要症状摘要
+};
+
+struct RecordDetail {           // 第二套（详情）信息
+    int     recordId = -1;
+    int     patientId = -1;
+    int     state = 0;
+    QString name;               // 患者姓名（只读展示）
+    QString sex;                // 性别（只读展示）
+    int     age = 0;            // 年龄（只读展示）
+    QString visitDate;          // 病历记录时间（可改）
+    QString doctor;             // 接诊医生姓名（只读展示）
+    QString mainSymptom;        // 主要症状（可改）
+    QString diagnosis;          // 诊断（可改）
+    QString treatPlan;          // 治疗意见 / 处方（可改）
 };
 
 class RecordWidget : public QWidget
@@ -43,42 +60,58 @@ public:
     explicit RecordWidget(QWidget *parent = nullptr);
 
 signals:
-    // 预留的上行信号（命名沿用其它 pane 的 to_xxx 习惯）：窗口将来在 init_task_connect 里
-    // 接到 SocketLink::send_data 上；**现在还没有接收方**，且不带打包数据 —— 接入时再补 QByteArray 入参。
-    void to_query_record();   // TODO: 查询病历（姓名/日期条件待按 protecol.h 组包）
-    void to_save_record();    // TODO: 保存修改后的病历
+    // 上行信号（沿用其它 pane 的 to_xxx 习惯）：窗口在 init_task_connect 里接到 SocketLink::send_data。
+    // data 已按 protecol.h 组包（HEAD + REQ），len 是整包字节数。
+    void to_query_record(const QByteArray data, int len);    // 第一套：按医生 id 查列表
+    void to_record_detail(const QByteArray data, int len);   // 第二套：按 record_id 查详情
+    // 保存修改：**复用新增病例那套包** —— HEAD(type=DOCTOR_SET_RECORD) + SET_RECORD_REQ，
+    // 和 appointwidget::sendRecord() 逐字段一致（只把 meet_id 填 0，服务端用不上它）。
+    void to_save_record(const QByteArray data, int len);
 
 public slots:
-    // 预留：服务端回包后由窗口调用，把结果灌进表格（现在只按本地数据重刷）
-    void flush_table();
+    // 下行槽：窗口接到 SocketLink::get_medical_record_success / *_detail_success 后调用
+    void flush_table();    // 把 CData::medical_record_list 灌进列表并刷新界面
+    void flush_detail();   // 把 CData::medical_record_details 里新到的详情灌进表单
 
 private slots:
-    void onQuery();          // 查询：按 姓名 + 就诊日期起止 过滤
+    void onQuery();          // 查询：发第一套请求（+ 占位数据阶段先按本地过滤刷列表）
     void onReset();          // 重置：清空查询条件并列出全部
-    void onSave();           // 保存修改：写回左侧选中行 + 刷新表格（暂不上包）
-    void onRevert();         // 撤销修改：把表单还原成选中行的值
-    void onRowChanged();     // 左侧选中行变化 → 右侧表单加载该行
+    void onSave();           // 保存修改：写回当前记录的详情（暂不上包）
+    void onRevert();         // 撤销修改：把表单还原成当前记录的详情
+    void onRowChanged();     // 选中行变化 → 发第二套请求 + 先用列表字段填表
 
 private:
-    void buildUi();                                  // 组装界面（只建一次）
-    void buildQueryBar(QVBoxLayout *root);           // 查询条
-    void buildTable(QWidget *parent, QHBoxLayout *row);   // 左侧结果表
-    void buildForm(QWidget *parent, QHBoxLayout *row);    // 右侧可编辑详情
+    void buildUi();                                       // 组装界面（只建一次）
+    void buildQueryBar(QVBoxLayout *root);                // 查询条
+    void buildTable(QWidget *parent, QHBoxLayout *row);    // 左侧列表
+    void buildForm(QWidget *parent, QHBoxLayout *row);     // 右侧详情表单
 
-    void seed();                                     // 占位数据（CData::is_check，同工作统计页的约定）
+    QByteArray makeQueryPack(int *outSize) const;                 // 第一套组包 HEAD + MEDICAL_RECORD_REQ
+    QByteArray makeDetailPack(int recordId, int *outSize) const;  // 第二套组包 HEAD + MEDICAL_RECORD_DETAIL_REQ
+    QByteArray makeSavePack(const RecordDetail &d, int *outSize) const;  // 保存组包 HEAD + SET_RECORD_REQ（同新增病例）
+
     void refreshTable();                             // 按当前条件重刷表格
     bool matchFilter(const RecordRow &r) const;      // 该行是否符合当前查询条件
     int  selectedDataRow() const;                    // 表格当前行 → m_rows 下标（-1 = 未选中）
-    void loadRowToForm(int idx);                     // 把某行灌进右侧表单
-    void setFormEnabled(bool on);                    // 表单可用性（未选中时应置灰）
-    void readFormInto(RecordRow &r) const;           // 把表单内容读回结构体
+    const RecordDetail *currentDetail() const;       // 当前选中行的详情（没有则 nullptr）
+    RecordDetail detailFromRow(const RecordRow &r) const;  // 用列表字段造一条“详情壳”（诊断/处方留空）
+    void requestDetailIfNeeded();                    // 当前选中行的详情没缓存就发第二套请求
+    void fillFormFromRow(const RecordRow &r);        // 用列表字段填表（详情字段清空）
+    void fillFormFromDetail(const RecordDetail &d);  // 用详情填表
+    void setDetailEnabled(bool on);                  // 详情字段/按钮可用性（详情没到时置灰）
+    void readFormInto(RecordDetail &d) const;        // 把表单可改字段读回结构体
     bool formDirty() const;                          // 表单有未保存改动（且不是在灌数据、有选中行）
-    bool formDiffersFromRow() const;                 // 纯比较：表单 vs 当前选中行（不判 m_loading，供刷新时用）
+    bool formDiffersFromDetail() const;              // 纯比较：表单 vs 当前记录详情（不判 m_loading）
+    bool formDiffersFrom(const RecordDetail &base) const;   // 纯比较：表单 vs 任意一份详情
 
-    // ---- 数据（占位；接入服务端后换成 CData 的缓存）----
-    QVector<RecordRow> m_rows;      // 全部病历
-    int  m_currentRow;             // 当前选中行在 m_rows 里的下标（-1 = 未选中）
-    bool m_loading;                // 正在把行灌进表单（期间不判脏、不弹提示）
+    // ---- 数据（列表/详情都来自 CData，见 flush_table()/flush_detail()）----
+    QVector<RecordRow>       m_rows;      // 列表（CData::medical_record_list 的界面版）
+    QHash<int, RecordDetail> m_details;   // 详情缓存，key = recordId（CData::medical_record_details 的界面版）
+    int  m_currentRow;                    // 当前选中行在 m_rows 里的下标（-1 = 未选中）
+    bool m_loading;                       // 正在把数据灌进表单（期间不判脏、不弹提示）
+    int  m_serverTotal;                   // 服务端报的符合条件总条数（-1 = 当前列表不是服务端直出的，别显示）
+    int  m_pendingDetailId;               // 正在等第二套回包的 record_id（-1 = 没在等）
+    RecordDetail m_pendingBase;           // 发详情请求那一刻表单里的内容（判断等回包期间医生有没有动过手）
 
     // ---- 控件 ----
     QLineEdit    *m_nameEdit;      // 查询：姓名
@@ -86,16 +119,19 @@ private:
     QDateEdit    *m_dateTo;        // 查询：就诊日期止
     QPushButton  *m_queryBtn;      // 查询
     QPushButton  *m_resetBtn;      // 重置
-    QTableWidget *m_table;         // 结果表
+    QTableWidget *m_table;         // 列表
     QLabel       *m_countLabel;    // “共 N 条”
 
-    QDateEdit   *m_fDate;          // 表单：就诊日期
-    QLineEdit   *m_fName;          // 表单：姓名
-    QComboBox   *m_fSex;           // 表单：性别
-    QSpinBox    *m_fAge;           // 表单：年龄
-    QLineEdit   *m_fDoctor;        // 表单：接诊医生
-    QTextEdit   *m_fDiagnosis;     // 表单：诊断
-    QTextEdit   *m_fTreatPlan;     // 表单：治疗意见（处方）
+    QLabel      *m_formTip;        // 表单右上角提示（详情加载中 / 已加载）
+    QDateEdit   *m_fDate;          // 表单：就诊日期（可改）
+    QLineEdit   *m_fName;          // 表单：姓名（只读）
+    QLineEdit   *m_fPatientId;     // 表单：患者编号（只读）
+    QComboBox   *m_fSex;           // 表单：性别（只读）
+    QSpinBox    *m_fAge;           // 表单：年龄（只读）
+    QLineEdit   *m_fDoctor;        // 表单：接诊医生（只读）
+    QTextEdit   *m_fSymptom;       // 表单：主要症状（可改）
+    QTextEdit   *m_fDiagnosis;     // 表单：诊断（可改）
+    QTextEdit   *m_fTreatPlan;     // 表单：治疗意见（可改）
     QPushButton *m_saveBtn;        // 保存修改
     QPushButton *m_revertBtn;      // 撤销修改
 };

@@ -45,6 +45,12 @@ signals:
 
     void get_guard_info_success();
 
+    //病历【第一套·列表】：CData::medical_record_list / medical_record_total 已刷新
+    void get_medical_record_success();
+
+    //病历【第二套·详情】：CData::medical_record_details[record_id] 已写入
+    void get_medical_record_detail_success();
+
 public slots:
     void onConnected();
 
