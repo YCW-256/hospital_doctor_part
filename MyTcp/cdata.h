@@ -10,6 +10,7 @@
 #include <vector>
 #include "protecol.h"
 #include <QWidget>
+#include <QImage>
 using namespace std;
 
 typedef struct{
@@ -84,6 +85,13 @@ public:
     // 第二套：详情缓存，key = record_id（选中某条后按需拉取，来一条存一条）
     static QHash<int, MEDICAL_RECORD_DETAIL_INFO> medical_record_details;
     //-----------------病历（两套协议）---------------------
+
+    //-----------------舌苔图片（GET_TONGUE_IMG 分片回包，见 Task/gettongueimgtask）---------------------
+    // 整张图收齐后才写入（中途的分片不动这几项），界面靠 patient_id 核对是不是自己等的那张
+    static QImage  tongue_image;             // 最近一次收齐的舌苔图片（isNull = 没有/没收全）
+    static int     tongue_image_patient_id;  // 该图属于哪个患者（IMG_T.id）
+    static QString tongue_image_file;        // 服务端给的文件名（调试用）
+    //-----------------舌苔图片---------------------
 
     static QWidget* current_widget;
 };

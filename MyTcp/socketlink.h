@@ -7,7 +7,8 @@
 #include "QTimer"
 #include "QByteArray"
 
-#define BUF_SIZE 4096
+// 收包缓冲不再用固定 char[BUF_SIZE]：舌苔图片一片就是 HEAD(24)+IMG_T(8312)=8336 字节，
+// 固定 4096 的缓冲一 memcpy 就写越界。改成动态 QByteArray（见 recv_data）。
 class SocketLink : public QObject
 {
     Q_OBJECT
@@ -26,9 +27,9 @@ private:
     QByteArray sendData;
     QTimer timer;
     //--------------------------缓存区元素----------------------------
-    char buf_data[BUF_SIZE];
-    int p_use;
-    int p_now;
+    // 收包缓冲：已收到但还没解出来的字节。每轮 recv_data 解析完整包、把用掉的字节从头部 remove 掉，
+    // 半包留在里面等下一次 readyRead（跨 readyRead 的粘包/拆包都靠它）。
+    QByteArray buf_data;
 
 
 
@@ -50,6 +51,10 @@ signals:
 
     //病历【第二套·详情】：CData::medical_record_details[record_id] 已写入
     void get_medical_record_detail_success();
+
+    //舌苔图片：**整张图收齐**（多分片全部到齐并拼成 QImage）才发，
+    // 此时 CData::tongue_image / tongue_image_patient_id 已是新值；中途的分片不发信号
+    void get_tongue_img_success();
 
 public slots:
     void onConnected();

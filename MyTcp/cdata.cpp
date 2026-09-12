@@ -25,6 +25,10 @@ vector<MEDICAL_RECORD_INFO> CData::medical_record_list{};
 int CData::medical_record_total=0;
 QHash<int,MEDICAL_RECORD_DETAIL_INFO> CData::medical_record_details{};
 
+QImage  CData::tongue_image{};
+int     CData::tongue_image_patient_id=-1;
+QString CData::tongue_image_file="";
+
 QWidget*CData::current_widget=nullptr;
 CData::CData() {
 

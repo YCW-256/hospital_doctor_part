@@ -145,6 +145,11 @@ void MainWindow::init_task_connect()
         this->appoint_widget->flush();
     });
 
+    //舌苔图片回包：分片在 worker 线程里被 GetTongueImgTask 攒齐、拼成 QImage 存进 CData，
+    // 这里（自动队列连接，切回主线程）转给当前打开的接诊详情弹窗显示
+    connect(this->m_socket,&SocketLink::get_tongue_img_success,
+            this->appoint_widget,&AppointWidget::flush_tongue_img);
+
     //查看病例流（两套都已打通）：
     //  第一套 列表：HEAD+MEDICAL_RECORD_REQ        → GET_MEDICAL_RECORD
     //  第二套 详情：HEAD+MEDICAL_RECORD_DETAIL_REQ → GET_MEDICAL_RECORD_DETAIL（选中某条时发）

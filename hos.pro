@@ -16,6 +16,7 @@ SOURCES += \
     Task/getinfotask.cpp \
     Task/getmedicalrecordtask.cpp \
     Task/getmedicalrecorddetailtask.cpp \
+    Task/gettongueimgtask.cpp \
     Task/logintask.cpp \
     Task/tologintask.cpp \
     Tool/myutils.cpp \
@@ -55,6 +56,7 @@ HEADERS += \
     Task/getinfotask.h \
     Task/getmedicalrecordtask.h \
     Task/getmedicalrecorddetailtask.h \
+    Task/gettongueimgtask.h \
     Task/logintask.h \
     Task/tologintask.h \
     Tool/myutils.h \

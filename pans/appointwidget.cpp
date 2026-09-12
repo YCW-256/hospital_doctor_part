@@ -137,10 +137,35 @@ void AppointWidget::openMeetDetail(int idx)
     rec.time        = info.time;
 
     AppointDetailWidget dlg(rec, this);
+    // “获得图片”：弹窗还开着时就要发出去（不等弹窗关闭），这里直连到组包函数。
+    // 医生 id / 患者 id 直接取快照 rec（与弹窗发来的两个参数同源），故 lambda 只用到 date。
+    // 注意：Qt6 的 connect 不接受“参数比信号少”的 lambda（会报 C2039 QtPrivate::value/FunctorReturnType
+    // 一串看不懂的模板错），所以按信号原样写全 3 个参数，未用的两个 Q_UNUSED 掉。
+    connect(&dlg, &AppointDetailWidget::to_get_tongue_img, this,
+            [this, rec](int doctorId, int patientId, const QString &date) {
+                Q_UNUSED(doctorId);
+                Q_UNUSED(patientId);
+                sendGetTongueImg(rec, date);
+            });
+
+    // 记下当前弹窗：图片是异步回包（分片拼齐才发信号），到时靠这个指针把图转给弹窗显示。
+    // 弹窗是栈对象，exec() 一返回就析构 —— 必须马上置空，否则后面到的回包会踩悬空指针。
+    m_detailDlg = &dlg;
+    const int ret = dlg.exec();
+    m_detailDlg = nullptr;
+
     // 只有点“完成”并二次确认过才返回 Accepted，此时才发 DOCTOR_SET_RECORD
-    if (dlg.exec() != QDialog::Accepted)
+    if (ret != QDialog::Accepted)
         return;
     sendRecord(rec, dlg.diagnosis(), dlg.treatPlan());
+}
+
+void AppointWidget::flush_tongue_img()
+{
+    // 弹窗没开就没地方显示，忽略即可（图片已经落在 CData 里，下次开窗 showTonguePixmap() 会直接显示）
+    if (!m_detailDlg)
+        return;
+    m_detailDlg->setTongueImage(CData::tongue_image, CData::tongue_image_patient_id);
 }
 
 void AppointWidget::sendRecord(const MeetRecord &rec,
@@ -171,5 +196,34 @@ void AppointWidget::sendRecord(const MeetRecord &rec,
     qDebug() << "发送就诊记录 DOCTOR_SET_RECORD: meet" << rec.meet_id
              << "doctor" << rec.doctor_id << "patient" << rec.patient_id
              << "| diagnosis:" << diagnosis << "| treat_plan:" << treatPlan;
+    emit to_get_meet(data, send_size);
+}
+
+void AppointWidget::sendGetTongueImg(const MeetRecord &rec, const QString &date)
+{
+    // 请求舌苔图片：医生 id + 患者 id + 日期（年月日），打包规范同 getAppInfo/sendRecord。
+    // 回包是同一 type 的若干 IMG_T 分片（见 Task/gettongueimgtask），收齐后经
+    // SocketLink::get_tongue_img_success → AppointWidget::flush_tongue_img 转给弹窗显示。
+    HEAD head;
+    memset(&head, 0, sizeof(head));
+    head.is_fragment = 0;
+    head.len = sizeof(GET_TONGUE_IMG_REQ);   // len = body 大小
+    head.type = SERVICE_TYPE::GET_TONGUE_IMG;
+
+    GET_TONGUE_IMG_REQ req;
+    memset(&req, 0, sizeof(req));
+    req.doctor_id  = rec.doctor_id;
+    req.patient_id = rec.patient_id;
+    copyCStr(req.date, sizeof(req.date), date);
+
+    int send_size = sizeof(head) + sizeof(req);
+    QByteArray data;
+    data.resize(send_size);
+    char *p = data.data();
+    memcpy(p, &head, sizeof(head));
+    memcpy(p + sizeof(head), &req, sizeof(req));
+
+    qDebug() << "发送舌苔图片请求 GET_TONGUE_IMG: doctor" << req.doctor_id
+             << "patient" << req.patient_id << "date" << date;
     emit to_get_meet(data, send_size);
 }

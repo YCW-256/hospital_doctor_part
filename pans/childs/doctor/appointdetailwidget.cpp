@@ -7,7 +7,12 @@
 #include <QTextEdit>
 #include <QPushButton>
 #include <QMessageBox>
+#include <QDate>
+#include <QRegularExpression>
+#include <QTimer>
+#include <QPixmap>
 #include <QDebug>
+#include "../../../MyTcp/cdata.h"   // 舌苔图片缓存（CData::tongue_image / tongue_image_patient_id）
 
 AppointDetailWidget::AppointDetailWidget(const MeetRecord &rec, QWidget *parent)
     : QDialog(parent)
@@ -16,10 +21,13 @@ AppointDetailWidget::AppointDetailWidget(const MeetRecord &rec, QWidget *parent)
     , m_timeLabel(nullptr)
     , m_extraLabel(nullptr)
     , m_tongueLabel(nullptr)
+    , m_getImgBtn(nullptr)
     , m_diagnosisEdit(nullptr)
     , m_prescriptionEdit(nullptr)
     , m_exporter(nullptr)
     , m_exporting(false)
+    , m_imgTimer(nullptr)
+    , m_imgWaiting(false)
     , m_exportBtn(nullptr)
     , m_backBtn(nullptr)
     , m_doneBtn(nullptr)
@@ -191,24 +199,98 @@ void AppointDetailWidget::buildUi()
 
     m_tongueLabel = new QLabel(this);
     m_tongueLabel->setFixedSize(200, 250);
-    // 目前没有图片，默认黑底占位（后续接图片后 setPixmap 显示舌苔照）
+    // 没有图片时是黑底占位（白字提示），拿到图后 setPixmap 显示舌苔照
     m_tongueLabel->setStyleSheet(
         "QLabel {"
         "  background: #000000;"
         "  border: 1px solid #B7D4F2;"
         "  border-radius: 8px;"
+        "  color: #FFFFFF;"
+        "  font-size: 13px;"
         "}");
     m_tongueLabel->setAlignment(Qt::AlignCenter);
     m_tongueLabel->setToolTip(QStringLiteral("舌苔图片（暂无）"));
+    m_tongueLabel->setWordWrap(true);
     right->addWidget(m_tongueLabel);
+
+    // “获得图片”：向服务端请求本次就诊（医生 id + 患者 id + 日期）的舌苔照，
+    // 图片回包暂不解析，先把请求发出去（与“完成”一样经 AppointWidget 打包上包）
+    m_getImgBtn = new QPushButton(QStringLiteral("获得图片"), this);
+    m_getImgBtn->setMinimumSize(200, 34);
+    m_getImgBtn->setStyleSheet(
+        "QPushButton{ background:#E6F0FA; color:#1E70BF; border:1px solid #B7D4F2; border-radius:6px; font-size:14px; }"
+        "QPushButton:hover{ background:#D6E6F5; }");
+    m_getImgBtn->setToolTip(QStringLiteral("向服务端请求该次就诊的舌苔图片（医生 id + 患者 id + 就诊日期）"));
+    right->addWidget(m_getImgBtn);
     right->addStretch();
 
     hMain->addLayout(right, 0);
 
     connect(m_backBtn, &QPushButton::clicked, this, &QDialog::reject);
     connect(m_doneBtn, &QPushButton::clicked, this, &AppointDetailWidget::onDone);
+    connect(m_getImgBtn, &QPushButton::clicked, this, &AppointDetailWidget::onGetTongueImg);
     connect(m_exportBtn, &QPushButton::toggled, this, [this]() { updateExportBtn(); });
     updateExportBtn();
+
+    // “获得图片”的等待超时：服务端在该患者/该日期没有图片时**不回包**（那边直接 return 了），
+    // 用个单次定时器兜底提示，别让图片位一直停在“正在获取…”。可重试（按钮一直可用）。
+    m_imgTimer = new QTimer(this);
+    m_imgTimer->setSingleShot(true);
+    m_imgTimer->setInterval(5000);
+    connect(m_imgTimer, &QTimer::timeout, this, [this]() {
+        if (!m_imgWaiting)
+            return;
+        m_imgWaiting = false;
+        clearTonguePlaceholder(QStringLiteral("未收到图片\n服务端可能没有该次就诊的舌苔图片，可重试"));
+    });
+
+    // 本次就诊的图之前已经收过（例如关掉又重开弹窗）就直接显示，不用再请求一次
+    showTonguePixmap();
+}
+
+void AppointDetailWidget::clearTonguePlaceholder(const QString &tip)
+{
+    // 注意顺序：QLabel 设了 pixmap 就不再显示文字，所以先清 pixmap 再 setText
+    m_tongueLabel->setPixmap(QPixmap());
+    m_tongueLabel->setText(tip);
+    m_tongueLabel->setToolTip(tip);
+}
+
+void AppointDetailWidget::showTonguePixmap()
+{
+    const QImage &img = CData::tongue_image;
+    if (img.isNull() || CData::tongue_image_patient_id != m_rec.patient_id) {
+        clearTonguePlaceholder(QStringLiteral("暂无图片\n点下方“获得图片”获取"));
+        return;
+    }
+    // 按图片位大小等比缩放，不拉伸变形（200×250 的框里放原始比例）
+    m_tongueLabel->setText(QString());
+    m_tongueLabel->setPixmap(QPixmap::fromImage(img).scaled(
+        m_tongueLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    m_tongueLabel->setToolTip(QStringLiteral("舌苔图片 %1×%2（%3）")
+                                  .arg(img.width()).arg(img.height())
+                                  .arg(CData::tongue_image_file));
+    qDebug() << "舌苔图片显示到弹窗: " << img.width() << "x" << img.height()
+             << CData::tongue_image_file;
+}
+
+void AppointDetailWidget::setTongueImage(const QImage &img, int patientId)
+{
+    // 认领：只认本次就诊这位患者的图（上一次请求的回包迟到、或服务端串了号都不理）
+    if (patientId != m_rec.patient_id) {
+        qDebug() << "收到非本次就诊的舌苔图片，忽略: 回包患者" << patientId
+                 << " 本次患者" << m_rec.patient_id;
+        return;
+    }
+
+    m_imgWaiting = false;
+    m_imgTimer->stop();
+
+    if (img.isNull()) {   // 收全了但拼图失败
+        clearTonguePlaceholder(QStringLiteral("图片不可用\n可重试“获得图片”"));
+        return;
+    }
+    showTonguePixmap();   // 图已在 CData 里（patient_id 刚核对过），直接画
 }
 
 void AppointDetailWidget::updateExportBtn()
@@ -218,6 +300,36 @@ void AppointDetailWidget::updateExportBtn()
     m_exportBtn->setText(on ? QStringLiteral("取消") : QStringLiteral("一键导出"));
     m_exportBtn->setToolTip(on ? QStringLiteral("已开启导出：点“完成”时会自动导出诊疗记录 PDF（再点本按钮取消）")
                                : QStringLiteral("开启后，点“完成”时自动把本次诊疗记录导出为 PDF"));
+}
+
+QString AppointDetailWidget::recordDate() const
+{
+    // 服务端下发的 m_rec.time 是原始时间串（形如 "2026-09-12 上午"、"2026/09/12" 等），
+    // 这里只把其中的“年月日”抠出来，统一成 yyyy-MM-dd 发给服务端（与 MEDICAL_RECORD_REQ 的日期格式一致）；
+    // 抠不到（服务端没给时间/格式不认识）就退回今天，至少保证包里日期非空。
+    static const QRegularExpression re(QStringLiteral("(\\d{4})[-/\\.](\\d{1,2})[-/\\.](\\d{1,2})"));
+    const QRegularExpressionMatch m = re.match(m_rec.time);
+    if (m.hasMatch()) {
+        const QDate d(m.captured(1).toInt(), m.captured(2).toInt(), m.captured(3).toInt());
+        if (d.isValid())
+            return d.toString(QStringLiteral("yyyy-MM-dd"));
+    }
+    return QDate::currentDate().toString(QStringLiteral("yyyy-MM-dd"));
+}
+
+void AppointDetailWidget::onGetTongueImg()
+{
+    // 请求需要的三项（医生 id / 患者 id / 日期）交给 AppointWidget 打包上包；
+    // 回包走 SocketLink::get_tongue_img_success → AppointWidget::flush_tongue_img → 本弹窗 setTongueImage()
+    const QString date = recordDate();
+    qDebug().noquote() << QStringLiteral("请求舌苔图片 GET_TONGUE_IMG: doctor %1, patient %2, date %3")
+                              .arg(m_rec.doctor_id).arg(m_rec.patient_id).arg(date);
+
+    clearTonguePlaceholder(QStringLiteral("正在获取舌苔图片…"));
+    m_imgWaiting = true;
+    m_imgTimer->start();     // 服务端没这张图时不会回包，靠它兜底提示
+
+    emit to_get_tongue_img(m_rec.doctor_id, m_rec.patient_id, date);
 }
 
 void AppointDetailWidget::onDone()
@@ -249,6 +361,7 @@ void AppointDetailWidget::startExport()
     m_exportBtn->setEnabled(false);
     m_backBtn->setEnabled(false);
     m_doneBtn->setEnabled(false);
+    m_getImgBtn->setEnabled(false);
     m_doneBtn->setText(QStringLiteral("导出中…"));
     m_exporting = true;
 
